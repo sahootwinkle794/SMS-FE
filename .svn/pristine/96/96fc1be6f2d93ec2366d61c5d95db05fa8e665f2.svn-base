@@ -1,0 +1,147 @@
+/* Whole table wrapper */
+.tableWrapper {
+  overflow-x: auto; /* scroll horizontally on small screens */
+  overflow-y: auto;
+  border-collapse: separate !important;
+  border-spacing: 0 8px !important;
+  width: 100%;
+}
+
+.tableWrapper tr {
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+/* Header cells */
+
+.tableHeader {
+  padding: 7px 14px !important; /* top-bottom, left-right */
+  font-family: "Inter", sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  /* line-height: 100% !important; */
+  letter-spacing: 0 !important;
+  color: #ffffff;
+  position: sticky;
+}
+
+/* Rounded corners */
+.tableHeader:first-child {
+  border-top-left-radius: 5px !important;
+}
+
+.tableHeader:last-child {
+  border-top-right-radius: 5px !important;
+}
+
+/* Bottom rounded corners for header row */
+.tableHeader:first-child {
+  border-bottom-left-radius: 5px !important;
+}
+
+.tableHeader:last-child {
+  border-bottom-right-radius: 5px !important;
+}
+
+.sortButton {
+  display: flex;
+  align-items: center;
+}
+
+.columnBorder {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 10px;
+  border-right: 1px solid #cbcbcb;
+  height: 100%;
+}
+
+.align_left {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+.align_center {
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.align_right {
+  justify-content: flex-end !important;
+  text-align: right !important;
+}
+
+.tableHeader:last-child .columnBorder {
+  border-right: none !important;
+}
+
+.tableRow {
+  box-shadow: inset 0px 0px 2px 0px #8d8d8d !important;
+  border-radius: 5px !important;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.08);
+  color: #535353;
+}
+
+/* Remove right border from LAST CELL in each body row */
+.tableRow td:last-child .columnBorder {
+  border-right: none !important;
+}
+
+/* ========================= */
+/* 📱 RESPONSIVE ADDED HERE  */
+/* ========================= */
+
+@media (max-width: 600px) {
+  /* Convert table to block layout */
+  .tableWrapper table,
+  .tableWrapper thead,
+  .tableWrapper tbody,
+  .tableWrapper th,
+  .tableWrapper td,
+  .tableWrapper tr {
+    display: block;
+  }
+
+  /* Hide header row */
+  .tableWrapper thead {
+    display: none;
+  }
+
+  /* Row becomes card */
+  .tableRow {
+    margin-bottom: 12px;
+    border-radius: 8px !important;
+    padding: 10px;
+    display: block;
+  }
+
+  /* Cell behaves like key-value layout */
+  .tableWrapper td {
+    display: flex !important;
+    justify-content: space-between;
+    padding: 12px !important;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .tableWrapper td:last-child {
+    border-bottom: none;
+  }
+
+  /* Add header label before each cell */
+  .tableWrapper td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+    text-align: left;
+    padding-right: 10px;
+  }
+
+  /* Value alignment */
+  .columnBorder {
+    flex: 2;
+    text-align: right;
+    border-right: none !important;
+  }
+}

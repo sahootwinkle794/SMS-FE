@@ -1,0 +1,4 @@
+.breadcrumbLink {
+  cursor: pointer;
+  color: var(--link) !important;
+}

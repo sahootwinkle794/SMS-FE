@@ -1,0 +1,15 @@
+services:
+  app:
+    container_name: react-sms-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_APP_BASE_URL: /sms
+    ports:
+      - "5001:5001"
+    environment:
+      - API_URL=http://103.39.241.183/identity/api/v1
+        # - API_URL=http://192.168.0.119:3001/api/v1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

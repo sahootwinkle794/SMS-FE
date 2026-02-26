@@ -1,0 +1,4 @@
+.btnSection {
+  display: flex;
+  justify-content: end;
+}

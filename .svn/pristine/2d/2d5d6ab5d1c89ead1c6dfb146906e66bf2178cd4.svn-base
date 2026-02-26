@@ -1,0 +1,350 @@
+"use client";
+
+import {
+  DataTable,
+  CustomModal,
+  AccessRestricted,
+  DrawerForm,
+  FloatingButton,
+  AppBreadcrumbs,
+} from "@/components";
+import type { Column } from "@/components/DataTable";
+import { getRequest, postRequest, putRequest, deleteRequest } from "@/service";
+import {
+  RoleResponse,
+  RoleListApiResponse,
+} from "@//types/superAdmin/setup/roleSetup/roleSetup";
+import { API_PATH } from "@/utils/apiPath";
+import {
+  STATUS_OPTIONS,
+  STATUS_CONFIG,
+  PageTitles,
+  STATUS_CODE,
+} from "../../../../utils/constants";
+import {
+  Flex,
+  Text,
+  Group,
+  ActionIcon,
+  Badge,
+  Box,
+  Container,
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import {
+  IconTrash,
+  IconEdit,
+  IconPlus,
+  IconDotsVertical,
+  IconFilter,
+} from "@tabler/icons-react";
+import { useCallback, useEffect, useState } from "react";
+import { IMAGES } from "@/utils/images";
+import { useMenuPermissions } from "@/hooks/useMenuPermissions";
+import moment from "moment";
+import { usePathname } from "next/navigation";
+
+const RECORDS_PER_PAGE = 10;
+
+const RoleSetUp = () => {
+  const [roles, setRoles] = useState<RoleResponse[]>([]);
+  const [drawerOpened, setDrawerOpened] = useState(false);
+  const [mode, setMode] = useState<"add" | "edit">("add");
+  const [editRoleId, setEditRoleId] = useState<string | null>(null);
+  const [initialValues, setInitialValues] = useState<any>({});
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: "" });
+  const [loading, setLoading] = useState(false);
+
+  const { canRead, canWrite } = useMenuPermissions();
+  const pathname = usePathname();
+  const pageTitle = PageTitles[pathname] ?? "Role Setup";
+
+  /* ================= DRAWER FIELDS ================= */
+  const fields = [
+    {
+      name: "roleCode",
+      label: "Role Code",
+      placeholder: "Enter role code",
+      required: true,
+      type: "number" as const,
+    },
+    {
+      name: "roleName",
+      label: "Role Name",
+      placeholder: "Enter role name",
+      required: true,
+      type: "text" as const,
+    },
+    {
+      name: "status",
+      label: "Status",
+      type: "select" as const,
+      placeholder: "Select status",
+      required: true,
+      options: STATUS_OPTIONS.map((o) => ({ label: o.label, value: o.value })),
+    },
+
+  ];
+
+  /* ================= DATA FETCH ================= */
+  const fetchRoles = useCallback(async () => {
+    setLoading(true);
+    try {
+      const payload = {
+        search: "",
+        page: currentPage,
+        limit: RECORDS_PER_PAGE,
+        sortBy: "created_at",
+        sortOrder: "DESC",
+      };
+      const response = await getRequest<RoleListApiResponse>(
+        API_PATH.GET_ROLES,
+        payload
+      );
+      setRoles(response.data.data);
+      setTotalRecords(response.data.total);
+    } catch (err) {
+      notifications.show({
+        title: "Error!",
+        message: "Failed to load roles",
+        color: "red",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]);
+
+  useEffect(() => {
+    fetchRoles();
+  }, [fetchRoles]);
+
+  /* ================= ACTIONS ================= */
+  const handleEditClick = async (id: string) => {
+    try {
+      const response = await getRequest<{ data: RoleResponse }>(
+        `${API_PATH.GET_ROLES}/${id}`
+      );
+      const role = response.data;
+      setInitialValues({
+        roleCode: role.roleCode,
+        roleName: role.roleName,
+        status: String(role.status),
+      });
+      setEditRoleId(id);
+      setMode("edit");
+      setDrawerOpened(true);
+    } catch {
+      notifications.show({
+        title: "Error!",
+        message: "Failed to fetch role",
+        color: "red",
+      });
+    }
+  };
+
+  const handleFormSubmit = async (formData: Record<string, unknown>) => {
+    const payload = {
+      roleCode: Number(formData.roleCode),
+      roleName: formData.roleName,
+      status: Number(formData.status),
+      createdBy: "admin-user",
+    };
+
+    try {
+      if (mode === "add") {
+        await postRequest(API_PATH.GET_ROLES, payload);
+        notifications.show({
+          title: "Success!",
+          message: "Role added successfully",
+          color: "green",
+        });
+      } else {
+        await putRequest(`${API_PATH.GET_ROLES}/${editRoleId}`, payload);
+        notifications.show({
+          title: "Updated!",
+          message: "Role updated successfully",
+          color: "green",
+        });
+      }
+      setDrawerOpened(false);
+      fetchRoles();
+    } catch (error: unknown) {
+      const err = error as { status?: number; message?: string };
+      if (err.status === STATUS_CODE.INTERNAL_ERROR) {
+        notifications.show({
+          title: "Duplicate Mobile Number",
+          message: "This mobile number is already registered",
+          color: "red",
+        });
+        return;
+      }
+      notifications.show({
+        title: "Error",
+        message: "Failed to save user",
+        color: "red",
+      });
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteRequest(`${API_PATH.GET_ROLES}/${deleteModal.id}`);
+      notifications.show({
+        title: "Success",
+        message: "Role Deleted",
+        color: "green",
+      });
+      setDeleteModal({ open: false, id: "" });
+      fetchRoles();
+    } catch {
+      notifications.show({
+        title: "Error!",
+        message: "Failed to delete role",
+        color: "red",
+      });
+    }
+  };
+
+  /* ================= COLUMNS ================= */
+  const columns: Column<RoleResponse>[] = [
+    {
+      header: "Sl. No",
+      accessor: "id",
+      render: (_, __, index) =>
+        (currentPage - 1) * RECORDS_PER_PAGE + index + 1,
+    },
+    {
+      header: "Actions",
+      accessor: "id",
+      render: (_, row) => (
+        <Group gap={8}>
+          {canWrite && (
+            <ActionIcon
+              color="blue"
+              variant="light"
+              onClick={() => handleEditClick(row.id)}
+            >
+              <IconEdit size={16} />
+            </ActionIcon>
+          )}
+
+          <ActionIcon
+            color="red"
+            variant="light"
+            onClick={() => setDeleteModal({ open: true, id: row.id })}
+          >
+            <IconTrash size={16} />
+          </ActionIcon>
+        </Group>
+      ),
+    },
+    { header: "Role Code", accessor: "roleCode" },
+    { header: "Role Name", accessor: "roleName" },
+    {
+      header: "Status",
+      accessor: "status",
+      render: (value) => {
+        const status = Number(value) as 1 | 2;
+        return (
+          <Badge
+            size="sm"
+            radius="xs"
+            variant="filled"
+            color={STATUS_CONFIG[status]?.color}
+          >
+            {STATUS_CONFIG[status]?.label}
+          </Badge>
+        );
+      },
+    },
+    { header: "Created By", accessor: "createdBy" },
+    {
+      header: "Created At",
+      accessor: "createdAt",
+      align: "left",
+      render: (value: moment.MomentInput) => (
+        <Text size="sm">
+          {value ? moment(value).format("DD MMM YYYY, hh:mm A") : "-"}
+        </Text>
+      ),
+    },
+  ];
+
+  if (!canRead && !canWrite) return <AccessRestricted pageTitle={pageTitle} />;
+
+  return (
+    <Box>
+      <Container fluid>
+        <Flex justify="space-between" align="center">
+          <AppBreadcrumbs
+            items={[{ label: "Access Control" }, { label: "Role setup" }]}
+          // isBackButton={true}
+          />
+        </Flex>
+      </Container>
+
+      <DataTable
+        data={roles}
+        columns={columns}
+        pageSize={RECORDS_PER_PAGE}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        totalRecords={totalRecords}
+        loading={loading}
+      />
+
+      <DrawerForm
+        opened={drawerOpened}
+        onClose={() => setDrawerOpened(false)}
+        title={mode === "add" ? "Add New Role" : "Edit Role"}
+        fields={fields}
+        initialValues={initialValues}
+        onSubmit={handleFormSubmit}
+      />
+
+      {!drawerOpened && (
+        <FloatingButton
+          mainTitle="Actions"
+          mainIcon={<IconDotsVertical size={20} />}
+          menuButtons={[
+            ...(canWrite
+              ? [
+                {
+                  title: "Add User",
+                  icon: <IconPlus size={18} />,
+                  onClick: () => {
+                    setMode("add");
+                    // setEditUser({}); // 🔥 clear edit data
+                    // setEditUserId(null);
+                    setDrawerOpened(true);
+                  },
+                },
+              ]
+              : []),
+            {
+              title: "Filter",
+              icon: <IconFilter size={18} />,
+              onClick: () => { },
+            },
+          ]}
+        />
+      )}
+
+      <CustomModal
+        opened={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, id: "" })}
+        icon={IMAGES.QUESTION}
+        title="Confirm Deletion"
+        actionText="Yes, Delete"
+        subtext="Are you sure you want to delete this role?"
+        onAction={handleConfirmDelete}
+        showCancel
+      />
+    </Box>
+  );
+};
+
+export default RoleSetUp;

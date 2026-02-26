@@ -1,0 +1,15 @@
+.indicator {
+  width: 5px;
+  height: 4px;
+  transition: width 250ms ease;
+  background-color: var(--carousel-indicator);
+  scale: 1.2;
+
+  &[data-active] {
+    width: 45px;
+    border-radius: 9px;
+    background-color: var(--danger);
+    scale: 1.2;
+
+  }
+}

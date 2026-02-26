@@ -1,0 +1,20 @@
+.headerContainer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-lg);
+  background: var(--background);
+  backdrop-filter: blur(12px);
+  /* border-bottom: 1px solid rgba(255, 255, 255, 0.3); */
+  /* box-shadow: 2px 0 5px #51515169; */
+}
+
+.breadcrumbLink {
+  cursor: pointer;
+  color: var(--link) !important;
+}
+
+.profileClick {
+  cursor: pointer;
+}

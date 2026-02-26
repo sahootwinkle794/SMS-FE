@@ -1,0 +1,98 @@
+:root {
+  --background: #f2f2f2;
+  --body-bg: #ffffff;
+  --foreground: #17171748;
+  --primary: #2E5799;
+  --secondary: #23A5B9;
+  --link: #0d588d;
+  --danger:#E51619;
+  --primary-gradient: linear-gradient(145.36deg, #177699 17.42%, #00307D 87.28%);
+  --primary-text: #FCFCFC;
+  --success: #00ab06;
+  --header: #0478b6;
+  --dark-subtle: #535353;
+  --font-ibm-plex: 'IBM Plex Sans', sans-serif;
+  --carousel-indicator: #A14586
+}
+
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+*::-webkit-scrollbar {
+  width: 3px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--mantine-color-gray-5);
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--mantine-color-gray-6);
+}
+
+
+.scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mantine-color-gray-5) transparent;
+}
+
+.mantine-Drawer-close {
+  color: var(--body-bg) !important;
+}
+.mantine-Drawer-close:hover {
+ color: var(--dark-subtle) !important;
+}
+
+.mantine-Modal-close {
+  color: var(--body-bg) !important;
+}
+
+.mantine-Modal-close:hover {
+  color: var(--dark-subtle) !important;
+}
+
+.mantine-Select-wrapper {
+  border: 1px solid #00000021 !important;
+}

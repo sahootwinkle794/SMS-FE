@@ -1,0 +1,1 @@
+export {default as EntitiyCard} from './EntitiyCard'

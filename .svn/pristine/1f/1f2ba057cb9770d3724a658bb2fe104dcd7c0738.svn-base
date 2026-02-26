@@ -1,0 +1,14 @@
+ACCESS_SECRET="supersecretkey"
+REFRESH_SECRET="your-refresh-secret-key"
+# Docker Sevice 
+API_URL=http://103.39.241.183/identity/api/v1
+
+NEXT_PUBLIC_API_URL1=http://103.39.241.183/identity/api/v1
+NEXT_PUBLIC_API_URL2=http://103.39.241.183/socmaster/api/v1
+NEXT_PUBLIC_API_URL3=http://103.39.241.183/socmgmnt/api/v1
+
+NEXT_APP_PROJECT_ENV="DEV"
+NEXT_APP_STRIPE_KEY="localKey"
+NEXT_APP_VERSION="1.0"
+NEXT_APP_LANGUAGE="en" 
+NEXT_PUBLIC_APP_BASE_URL="/sms"

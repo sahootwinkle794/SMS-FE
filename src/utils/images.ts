@@ -1,0 +1,66 @@
+import screenErrorBackground from "@/public/assets/images/screen-error-background.svg";
+import doggoNotFound from "@/public/assets/icons/doggo_not_found.svg";
+import userProfile from "@/public/assets/icons/user_profile.png";
+import successIcon from "@/public/assets/icons/success-icon.svg";
+import dangerIcon from "@/public/assets/icons/danger-circle.svg";
+import double_left_arrow from "@/public/assets/icons/double_left_arrow.svg";
+import double_right_arrow from "@/public/assets/icons/double_right_arrow.svg";
+import edit_icon_white from "@/public/assets/icons/edit-icons-white.svg";
+import unauthorized from "@/public/assets/icons/unauthorized.svg";
+import brand_logo from "@/public/assets/images/sms_logo.svg";
+import brand_icon from "@/public/assets/icons/brand_icon.svg";
+import question_icon from "@/public/assets/icons/question.svg";
+import fallback_img from "@/public/assets/icons/fallback-img.svg";
+import slide_img_1 from "@/public/assets/images/slide_img_1.svg";
+import slide_img_2 from "@/public/assets/images/slide_img_2.svg";
+import slide_img_3 from "@/public/assets/images/slide_img_3.svg";
+import slide_img_4 from "@/public/assets/images/slide_img_4.svg";
+import slide_img_5 from "@/public/assets/images/slide_img_5.svg";
+
+import SocaityBrandImg from "@/public/assets/icons/SocaityBrandImg.svg";
+
+import {
+  IconGauge,
+  IconKey,
+  IconListDetails,
+  IconLock,
+  IconReportAnalytics,
+  IconSettings,
+  IconUsers,
+  IconUserShield,
+} from "@tabler/icons-react";
+
+export const IMAGES = {
+  SCREEN_ERROR_BACKGROUND: screenErrorBackground.src,
+  DOGGO_NOT_FOUND: doggoNotFound.src,
+  USER_PROFILE: userProfile.src,
+  SUCCESS_ICON: successIcon.src,
+  DANGER_ICON: dangerIcon.src,
+  DOUBLE_LEFT_ARROW: double_left_arrow.src,
+  DOUBLE_RIGHT_ARROW: double_right_arrow.src,
+  EDIT_ICON_WHITE: edit_icon_white.src,
+  SOCIETY_BRAND_IMG: SocaityBrandImg.src,
+  BRAND_LOGO: brand_logo.src,
+  BRAND_ICON: brand_icon.src,
+  QUESTION: question_icon.src,
+  UNAUTHORIZED: unauthorized.src,
+  FALLBACK_IMG: fallback_img.src,
+  SLIDE_IMG_1: slide_img_1.src,
+  SLIDE_IMG_2: slide_img_2.src,
+  SLIDE_IMG_3: slide_img_3.src,
+  SLIDE_IMG_4: slide_img_4.src,
+  SLIDE_IMG_5: slide_img_5.src,
+};
+
+export const sidebarIconMap = {
+  dashboard: IconGauge,
+  settings: IconSettings,
+  key: IconKey,
+  users: IconUsers,
+  shield: IconUserShield,
+  list: IconListDetails,
+  lock: IconLock,
+  report: IconReportAnalytics,
+} as const;
+
+export type SidebarIconKey = keyof typeof sidebarIconMap;

@@ -1,0 +1,196 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Outfit:wght@100..900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Outfit:wght@100..900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+
+.header,
+.hero,
+.feature,
+.service,
+.high,
+.faqs,
+.contacts {
+    /* float: left; */
+    width: 100%;
+}
+
+/* header section start  */
+.header {
+    position: absolute !important;
+    top: 0;
+    background: transparent !important;
+}
+
+.btn-text {
+    font-family: "Roboto", sans-serif;
+    font-weight: 100;
+}
+
+/* header section end  */
+/* hero section start  */
+.hero {
+    position: relative;
+    min-height: 100vh;
+    background-image: url('../assets/img/hero.svg');
+    background-position: top center;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.hero-text {
+    font-family: "Geist", sans-serif;
+}
+
+.hero-btn {
+    font-family: "Raleway", sans-serif;
+    font-weight: 200;
+    padding: 10px 60px;
+}
+
+/* hero section end  */
+/* features section start  */
+.feature {
+    border-top-left-radius: 66.67px;
+    border-top-right-radius: 66.67px;
+    margin-bottom: 22px;
+
+}
+
+.feature-con {
+    padding-bottom: 80px;
+}
+
+.feature-title {
+    color: #C33923;
+    letter-spacing: 20%;
+    font-size: 20px;
+    font-family: "Outfit", sans-serif;
+}
+
+.feature-title2 {
+    font-size: 40px;
+    color: #FF2C36;
+    font-family: "Geist", sans-serif;
+}
+
+.feature-title3 {
+    color: black;
+    font-size: 16px;
+    font-family: "Outfit", sans-serif;
+    font-weight: 600;
+
+}
+
+.feature-title4 {
+    color: #000;
+    font-size: 16px;
+    margin-top: 10px;
+    font-family: "Outfit", sans-serif;
+
+}
+
+.featureCard {
+    background-image: url('../assets/img/card-bg.svg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    /* background: linear-gradient(135deg, #FFEBE3 0%, #FFD6CA 100%); */
+    transition: background 0.4s ease, box-shadow 0.3s ease;
+    border-radius: 12px;
+    color: #FF3952;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.featureCard:hover {
+    background: linear-gradient(135deg, #FFD6CA 0%, #FFEBE3 100%);
+    box-shadow: 0 10px 25px rgba(250, 153, 158, 0.171);
+}
+
+.Feature-card-text {
+    font-size: 30px;
+    line-height: 30px;
+    font-family: "Geist", sans-serif;
+
+}
+
+.feature-p {
+    font-size: 15px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #000 !important;
+    font-family: "Outfit", sans-serif;
+
+}
+
+/* features section end  */
+/* services section start  */
+
+.service {
+    background-image: url('../assets/img/serve-bg.svg');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    /* padding-top: 70px; */
+    /* padding-bottom: 70px; */
+}
+
+.serve-head {
+    font-family: "Geist", sans-serif;
+    /* text-align: center; */
+}
+
+.serve-title1 {
+    margin-top: 55px;
+    font-size: 50px;
+    font-family: "Geist", sans-serif;
+    color: #FF3952;
+    text-align: center;
+}
+
+.serve-title2 {
+    font-size: 20px;
+    font-family: "Outfit", sans-serif;
+    font-weight: 500;
+    text-align: center;
+
+}
+
+.dashboard-img {
+    width: 100%;
+    height: auto;
+}
+
+.who-icon {
+    width: 80px;
+    height: 80px;
+}
+
+.who-title {
+    font-weight: 600;
+    font-size: 20px;
+    color: white;
+    font-family: "Outfit", sans-serif;
+
+}
+
+.who-p {
+    font-size: 15px;
+    color: white;
+    font-family: "Outfit", sans-serif;
+    font-weight: 400;
+}
+
+.who-btn {
+    font-family: "Raleway", sans-serif;
+    font-weight: 100;
+}
+
+/* .serve-two{
+    padding-top: 158px;
+} */
+/* services section end  */
