@@ -5,7 +5,6 @@ import {
   Grid,
   TextInput,
   Textarea,
-  Switch,
   Button,
   Group,
   Stack,
@@ -15,6 +14,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { useMantineTheme } from "@mantine/core";
 import { ServiceFormState } from "../../../../../types/admin/societyManagement/services/serviceSetup/serviceSetup"
+import { STATUS_OPTIONS, SERVICE_TYPE_OPTIONS, REGEX } from "@/utils/constants";
 
 
 interface ServiceSetupModalFormProps {
@@ -36,11 +36,12 @@ const ServiceSetupModalForm = ({
     serviceCode: "",
     serviceName: "",
     description: "",
-    serviceType: "INTERNAL",
+    serviceType: "",
     iconUrl: "",
-    displayOrder: 1,
-    isActive: true,
+    displayOrder: undefined,
+    status: "",
   });
+  const [errors, setErrors] = useState<Partial<Record<keyof ServiceFormState, string>>>({});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,6 +53,7 @@ const ServiceSetupModalForm = ({
 
   useEffect(() => {
     if (opened) {
+      setErrors({});
       if (editingFormState) {
         setForm(editingFormState);
       } else {
@@ -59,20 +61,62 @@ const ServiceSetupModalForm = ({
           serviceCode: "",
           serviceName: "",
           description: "",
-          serviceType: "INTERNAL",
+          serviceType: "",
           iconUrl: "",
-          displayOrder: 1,
-          isActive: true,
+          displayOrder: undefined,
+          status: ""
         });
       }
     }
   }, [opened, editingFormState]);
 
-  const handleInputChange = (field: keyof ServiceFormState, value: any) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+
+
+  const handleInputChange = <K extends keyof ServiceFormState>(
+    field: K,
+    value: ServiceFormState[K]
+  ) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
+    });
+  };
+
+  const validateForm = () => {
+    const newErrors: Partial<Record<keyof ServiceFormState, string>> = {};
+
+    // Service Code
+    if (!form.serviceCode.trim()) {
+      newErrors.serviceCode = "Service Code is required";
+    } else if (!REGEX.SOCIETY_CODE.test(form.serviceCode)) {
+      newErrors.serviceCode = "Invalid Service Code format";
+    }
+
+    // Service Name
+    if (!form.serviceName.trim()) {
+      newErrors.serviceName = "Service Name is required";
+    }
+
+    if (!form.serviceType.trim()) {
+      newErrors.serviceType = "Service Type is required"
+    }
+    if (form.status === "" || form.status === null || form.status === undefined) {
+      newErrors.status = "Status is required";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) return;
     setIsSubmitting(true);
     try {
       await onSubmit(form);
@@ -111,6 +155,7 @@ const ServiceSetupModalForm = ({
             <TextInput
               label="Service Code"
               value={form.serviceCode}
+              error={errors.serviceCode}
               onChange={(e) =>
                 handleInputChange("serviceCode", e.target.value)
               }
@@ -124,6 +169,7 @@ const ServiceSetupModalForm = ({
             <TextInput
               label="Service Name"
               value={form.serviceName}
+              error={errors.serviceName}
               onChange={(e) =>
                 handleInputChange("serviceName", e.target.value)
               }
@@ -150,12 +196,10 @@ const ServiceSetupModalForm = ({
             <Select
               label="Service Type"
               value={form.serviceType}
-              data={[
-                { value: "INTERNAL", label: "Internal" },
-                { value: "EXTERNAL", label: "External" },
-              ]}
+              data={SERVICE_TYPE_OPTIONS}
+              error={errors.serviceType}
               onChange={(value) =>
-                handleInputChange("serviceType", value)
+                handleInputChange("serviceType", value ?? "")
               }
               disabled={isSubmitting}
               size="sm"
@@ -167,7 +211,10 @@ const ServiceSetupModalForm = ({
               label="Display Order"
               value={form.displayOrder}
               onChange={(value) =>
-                handleInputChange("displayOrder", value || 1)
+                handleInputChange(
+                  "displayOrder",
+                  typeof value === "number" ? value : undefined
+                )
               }
               min={1}
               disabled={isSubmitting}
@@ -190,17 +237,19 @@ const ServiceSetupModalForm = ({
 
           <Grid.Col
             span={{ base: 12, sm: 6 }}
-            style={{ display: "flex", alignItems: "center" }}
+
           >
-            <Switch
-              label="Active"
-              color="primary.5"
-              checked={form.isActive}
-              onChange={(e) =>
-                handleInputChange("isActive", e.currentTarget.checked)
+            <Select
+              label="Status"
+              placeholder="Select Status"
+              required
+              data={STATUS_OPTIONS}
+              value={form?.status?.toString()}
+              error={errors.status}
+              onChange={(value) =>
+                handleInputChange("status", Number(value) as 0 | 1)
               }
               disabled={isSubmitting}
-              mt={22}   // aligns with input field height
             />
           </Grid.Col>
 

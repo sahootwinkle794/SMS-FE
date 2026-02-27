@@ -15,10 +15,7 @@ import { Carousel } from "@mantine/carousel";
 import SectionHeader from "../ui/SectionHeader";
 import FeatureCard from "../ui/FeatureCard";
 import { FEATURES, COLORS } from "../../constants";
-import { featureArt } from "../../assets/utils/images";
-import { iconFeatureOne } from "../../assets/utils/images";
-import { iconFeatureTwo } from "../../assets/utils/images";
-import { iconFeatureThree } from "../../assets/utils/images";
+import { featureArt,iconFeatureOne, iconFeatureTwo, iconFeatureThree } from "../../assets/utils/images";
 
 export default function FeaturesSection() {
   return (

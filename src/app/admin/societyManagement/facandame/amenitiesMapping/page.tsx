@@ -51,25 +51,34 @@ const AmenityMapping = () => {
   }, [amenityTiers]);
 
   // Derive CommonCategory from API response
-  const currentCategories = useMemo(() => {
-    return tierCategories.flatMap((tc) =>
-      tc.categoryDetails
-        .filter((cd) => cd.status === 1)
-        .map((cd) => ({
+const currentCategories = useMemo(() => {
+  return tierCategories.flatMap((tc) =>
+    tc.categoryDetails
+      .filter((cd) => cd.status === 1)
+      .map((cd) => {
+        const sorted = (categoryAmenityMap[cd.categoryCode] ?? [])
+          .slice()
+          .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+
+        return {
           title: cd.categoryName || "Untitled Category",
           description: tc.tierName,
-          amenities: (categoryAmenityMap[cd.categoryCode] ?? []).map((a) => a.amenityName),
+          amenities: sorted.map((a) => a.amenityName),
           amenityStatuses: Object.fromEntries(
-            (categoryAmenityMap[cd.categoryCode] ?? []).map((a) => [a.amenityName, a.status === 1])
+            sorted.map((a) => [a.amenityName, a.status === 1])
+          ),
+          amenityDisplayOrders: Object.fromEntries(
+            sorted.map((a) => [a.amenityName, a.displayOrder])
           ),
           icon: undefined,
           id: cd.id,
           categoryCode: cd.categoryCode,
           tierCode: tc.tierCode,
           status: cd.status,
-        })),
-    );
-  }, [tierCategories, categoryAmenityMap]);
+        };
+      }),
+  );
+}, [tierCategories, categoryAmenityMap]);
 
   const formFields: Field[] = [
     {
@@ -128,10 +137,7 @@ const AmenityMapping = () => {
       required: true,
       colSpan: 3,
       fieldset: "amenityRows",
-      options: [
-        { value: "active", label: "Active" },
-        { value: "inactive", label: "Inactive" },
-      ],
+      options: STATUS_OPTIONS.map((o) => ({ label: o.label, value: o.value })),
     },
   ];
 
@@ -160,14 +166,14 @@ const AmenityMapping = () => {
         amenityDetails: amenityRows.map((row) => ({
           amenityId: row.amenityId,
           displayOrder: Number(row.displayOrder) || 0,
-          status: row.amenityStatus === "active" ? 1 : 0,
+          status: row.amenityStatus === "1" ? 1 : 0,
         })),
       };
 
       await postRequest(API_PATH.CATEGORY_AMENITY_MAPPING, payload);
 
       notifications.show({
-        title: COMMON_MESSAGE.SUCCESSFUL,
+        title: "Success",
         message: editMode
           ? COMMON_MESSAGE.AMENITY_MAPPING_UPDATE
           : COMMON_MESSAGE.AMENITY_MAPPING_ADDED, 
@@ -201,7 +207,7 @@ const AmenityMapping = () => {
 
       return items.flatMap((item) =>
         item.amenityDetails
-          .filter((a) => a.status === 1 || a.status === 0)
+          .filter((a) => (a.status === 1 || a.status === 0) && a.isAmenityActive === 1)
           .map((a) => {
             const matched = amenitiesList.find(
               (am) => am.amenityCode === a.amenityCode,
@@ -237,7 +243,6 @@ const AmenityMapping = () => {
   };
 
   const handleEdit = async (category: any, tabValue: string) => {
-    console.log('On edit I get this', category, tabValue)
     setEditingCategory({ ...category, tabValue });
     setEditMode(true);
 
@@ -252,16 +257,18 @@ const AmenityMapping = () => {
 
     const amenityRows =
       details.length > 0
-        ? details.map((a) => ({
+        ? details
+        .sort((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999))
+        .map((a) => ({
             amenityId: a.amenityId,
             displayOrder: String(a.displayOrder),
-            amenityStatus: a.status === 1 ? "active" : "inactive",
+            amenityStatus: a.status === 1 ? "1" : "0",
           }))
-        : [{ amenityId: "", displayOrder: "", amenityStatus: "active" }];
+        : [{ amenityId: "", displayOrder: "", amenityStatus: "1" }];
 
     setDrawerInitialValues({
       categoryCode: category.categoryCode || "",
-      status: category.status === 0 ? "inactive" : "active",
+      status: category.status === 0 ? "0" : "1",
       amenityRows,
     });
 
@@ -280,14 +287,6 @@ const AmenityMapping = () => {
     setEditMode(false);
     setEditingCategory(null);
     setDrawerInitialValues(undefined);
-  };
-
-  const handleSave = () => {
-    console.log("Saving amenities configuration...");
-  };
-
-  const handleReset = () => {
-    console.log("Resetting to default configuration...");
   };
 
   //=================== Initial Data Fetch ===================
@@ -490,6 +489,7 @@ const AmenityMapping = () => {
                   amenityStatuses={category.amenityStatuses}
                   onEdit={() => handleEdit(category, activeTab)}
                   isChecked={category.status === 1}
+                  amenityDisplayOrders={category.amenityDisplayOrders}
                 />
               ))
             )}

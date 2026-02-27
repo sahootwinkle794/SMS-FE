@@ -33,25 +33,17 @@ import {
   IconDotsVertical,
   IconEdit,
   IconTrash,
-  IconLock,
 } from "@tabler/icons-react";
 import { IMAGES } from "@/utils/images";
 import { useRoles } from "@/hooks/useRoles";
 import { Column, DataTable } from "@/components/DataTable";
-import {
-  deleteRequest,
-  getRequest,
-  patchRequest,
-  postRequest,
-  putRequest,
-} from "@/service";
+import { deleteRequest, getRequest, postRequest, putRequest } from "@/service";
 import { API_PATH } from "@/utils/apiPath";
 import {
   UserDataResponse,
   User,
   SingleUserResponse,
   EditUserForm,
-  PatchEditUserForm,
 } from "@/types/admin/setup/userSetup/userSetup";
 import moment from "moment";
 import { useMenuPermissions } from "@/hooks/useMenuPermissions";

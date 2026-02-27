@@ -427,7 +427,7 @@ const RoleSetUp = () => {
 
                 <Select
                   mt="xs"
-                  label="Statussss"
+                  label="Status"
                   data={STATUS_OPTIONS}
                   placeholder="Select status"
                   value={form.values.status || null}

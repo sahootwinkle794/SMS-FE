@@ -24,6 +24,7 @@ import classes from "./FacilitiesAndAmenity.module.css";
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface MenuItem {
+  menuSeq: any;
   id: string | number;
   menuLevel: number;
   menuUrl: string;
@@ -42,7 +43,9 @@ interface MenuResponse {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const filterMenuChildren = (children: MenuItem[]): MenuItem[] =>
-  children.filter((child) => child.status !== 2);
+    children
+    .filter((child) => child.status !== 2)
+    .sort((a, b) => a.menuSeq - b.menuSeq);
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 

@@ -13,20 +13,17 @@ export interface UserData {
   updatedAt: string;
 }
 
-
-
-// Row in table
-export interface User {
-  statusColor: string;
+export type User = {
   id: string;
   name: string;
-  userCode: string; // roleId
+  userCode: string;
   phone: string;
   email: string;
+  status: "Active" | "Inactive" | "Pending";
+  statusColor: string;
   createdBy: string;
   createdAt: string;
-  status: "Active" | "Inactive";
-}
+};
 
 // API response for list
 export interface UserDataResponse {

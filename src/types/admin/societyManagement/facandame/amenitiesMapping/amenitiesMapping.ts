@@ -78,6 +78,7 @@ export interface CatAmenityMapApiResponse {
       categoryCode: string;
       categoryName: string;
       amenityDetails: {
+        isAmenityActive: number;
         id: string;
         amenityCode: string;
         amenityName: string;

@@ -4,10 +4,7 @@ import { Container, Grid, Stack, Box, Title, Button } from "@mantine/core";
 import ServiceItem from "../ui/ServiceItem";
 import { SERVICES, COLORS } from "../../constants";
 import { Carousel } from "@mantine/carousel";
-import { dashBoard } from "../../assets/utils/images";
-import { iconServeOne } from "../../assets/utils/images";
-import { iconServeTwo } from "../../assets/utils/images";
-import { iconServeThree } from "../../assets/utils/images";
+import { dashBoard,iconServeOne, iconServeTwo, iconServeThree} from "../../assets/utils/images";
 
 export default function ServicesSection() {
   return (

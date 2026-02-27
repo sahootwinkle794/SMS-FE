@@ -18,7 +18,7 @@ export default function WebsitePage() {
       <HeroSection />
       <FeaturesSection />
       <ServicesSection />
-      <HighlightsSection />
+      {/* <HighlightsSection /> */}
       <ContactSection />
       <FAQSection />
       <Footer />

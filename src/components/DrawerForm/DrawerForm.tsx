@@ -73,6 +73,7 @@ interface DrawerFormProps {
   size?: string;
   position?: "left" | "right" | "top" | "bottom";
   fieldsets?: FieldsetConfig[];
+  onRemoveEntry?: (fieldsetId: string, index: number, entryValues: Record<string, any>) => void;
 }
 
 export default function DrawerForm({
@@ -85,6 +86,7 @@ export default function DrawerForm({
   size,
   position = "right",
   fieldsets = [],
+  onRemoveEntry,
 }: DrawerFormProps) {
   const theme = useMantineTheme();
 
@@ -287,15 +289,15 @@ export default function DrawerForm({
   };
 
   /* -------------------- RENDER MULTIPLE ENTRY SECTION -------------------- */
-  const renderMultipleEntrySection = (
-    config: FieldsetConfig,
-    fieldGroup: Field[]
-  ) => {
+  // In DrawerForm.tsx — add to interface
+interface DrawerFormProps {
+  // ...existing props
+  onRemoveEntry?: (fieldsetId: string, index: number, entryValues: Record<string, any>) => void;
+}
+
+  const renderMultipleEntrySection = (config: FieldsetConfig, fieldGroup: Field[]) => {
     const entryKey = config.multipleEntryKey || config.id;
     const entries = form.values[entryKey] || [{}];
-    
-    // Reserve 1 column for delete button
-    const deleteColSpan = 1;
 
     return (
       <Stack>
@@ -307,14 +309,17 @@ export default function DrawerForm({
               </Grid.Col>
             ))}
 
-            <Grid.Col span={deleteColSpan}>
+            <Grid.Col span={1}>
               {entries.length > 1 && (
                 <Tooltip label="Remove row">
                   <ActionIcon
                     color="red"
                     variant="light"
-                    onClick={() => form.removeListItem(entryKey, index)}
-                    style={{ marginBottom: index === 0 ? 0 : 4 }}
+                    onClick={() => {
+                      // ← capture entry before removing
+                      onRemoveEntry?.(config.id, index, entries[index]);
+                      form.removeListItem(entryKey, index);
+                    }}
                   >
                     <IconTrash size={16} />
                   </ActionIcon>
@@ -328,9 +333,7 @@ export default function DrawerForm({
           leftSection={<IconPlus size={20} />}
           variant="light"
           color="primary.5"
-          onClick={() =>
-            form.insertListItem(entryKey, getDefaultEntry(config.id))
-          }
+          onClick={() => form.insertListItem(entryKey, getDefaultEntry(config.id))}
           mt="sm"
         >
           Add More

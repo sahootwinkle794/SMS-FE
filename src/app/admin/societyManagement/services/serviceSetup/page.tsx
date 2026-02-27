@@ -2,7 +2,7 @@
 import { AppBreadcrumbs, CustomModal, DataTable } from '@/components'
 import { deleteRequest, getRequest, patchRequest, postRequest } from '@/service'
 import { API_PATH } from '@/utils/apiPath'
-import { COMMON_MESSAGE, PAGE_TITLE, RECORDS_PER_PAGE } from '@/utils/constants'
+import { COMMON_MESSAGE, PAGE_TITLE, RECORDS_PER_PAGE, STATUS_CONFIG } from '@/utils/constants'
 import { RouteConfig } from '@/utils/routeConfig'
 import { ActionIcon, Affix, Badge, Button, Group, Text, Tooltip } from '@mantine/core'
 import { IconEdit, IconPlus, IconTrash, IconX } from '@tabler/icons-react'
@@ -49,17 +49,31 @@ const ServiceSetup = () => {
   //-----------Submit Add/Edit-----------//
 
   const handleSubmit = async (
-    formData: Omit<ServiceFormState, "status">,
+    formData: ServiceFormState
   ): Promise<void> => {
     try {
       if (editing) {
+        const { serviceId, ...rest } = formData as ServiceFormState & {
+          serviceId?: string;
+        };
+
+        const payload = {
+          ...rest,
+          id: editing.serviceId,   // ✅ send id instead
+        };
+
         await patchRequest(
-          `${API_PATH.UPDATE_AMENITY}/${editing.serviceId}`,
-          formData,
+          API_PATH.GET_SERVICE_MASTER,
+          payload
         );
+
         notifySuccess(COMMON_MESSAGE.SERVICE_UPDATE);
       } else {
-        await postRequest(API_PATH.GET_SERVICE_MASTER, formData);
+
+        const { id, ...payload } = formData;
+
+        await postRequest(API_PATH.GET_SERVICE_MASTER, payload);
+
         notifySuccess(COMMON_MESSAGE.SERVICE_ADDED);
       }
 
@@ -88,7 +102,6 @@ const ServiceSetup = () => {
         API_PATH.GET_SERVICE_MASTER,
         payload,
       )) as ServiceApiResponse;
-
       setServiceData(res?.data?.data ?? []);
       setTotalRecords(res?.data?.total ?? 0);
     } catch (err: unknown) {
@@ -132,7 +145,6 @@ const ServiceSetup = () => {
       setSelectedItem(null);
       fetchServiceDetails();
     } catch (error) {
-      console.error(error);
       notifications.show({
         title: "Error",
         message: "Failed to delete amenity",
@@ -215,18 +227,22 @@ const ServiceSetup = () => {
     },
     {
       header: "Status",
+      accessor: "status",
       width: "8%",
       align: "center",
-      render: (_value, row) => (
-        <Badge
-          size="sm"
-          radius="xs"
-          variant="filled"
-          color={row.isActive ? "green" : "red"}
-        >
-          {row.isActive ? "Active" : "Inactive"}
-        </Badge>
-      ),
+      render: (value) => {
+        const status = Number(value) as 0 | 1;
+        return (
+          <Badge
+            size="sm"
+            radius="xs"
+            variant="filled"
+            color={STATUS_CONFIG[status]?.color}
+          >
+            {STATUS_CONFIG[status]?.label}
+          </Badge>
+        );
+      },
     },
   ];
 
@@ -266,8 +282,8 @@ const ServiceSetup = () => {
           }}
           color="primary.5"
           onClick={() => {
-            console.log("hello")
             setEditing(null);
+
             setOpened(true);
           }}
 
@@ -292,7 +308,7 @@ const ServiceSetup = () => {
         onClose={() => setDeleteModalOpen(false)}
         icon={IMAGES.QUESTION}
         title="Confirm Deletion"
-        subtext="Are you sure you want to delete this amenity?"
+        subtext="Are you sure you want to delete this Service?"
         actionText="Yes, Delete"
         onAction={handleConfirmDelete}
         showCancel

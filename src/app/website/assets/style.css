@@ -3,6 +3,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Outfit:wght@100..900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Outfit:wght@100..900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&family=Geist:wght@100..900&display=swap');
 
 
 .header,
@@ -12,7 +13,6 @@
 .high,
 .faqs,
 .contacts {
-    /* float: left; */
     width: 100%;
 }
 
@@ -190,7 +190,76 @@
     font-weight: 100;
 }
 
-/* .serve-two{
-    padding-top: 158px;
-} */
 /* services section end  */
+/* Contact section start  */
+
+.contact-title {
+    font-family: "Geist", sans-serif;
+    font-size: 50px;
+    font-weight: 100;
+}
+
+.contact-title2 {
+    font-family: "Geist", sans-serif;
+    font-size: 50px;
+    font-weight: 600;
+}
+
+.contacts {
+    margin-top: 50px;
+}
+
+.contact-title3 {
+    font-family: "Outfit", sans-serif;
+    font-size: 25px;
+    font-weight: 100;
+}
+
+.highlight {
+    color: #0074BD;
+    font-size: 25px;
+    margin-left: 10px;
+}
+
+/* Apply to all input labels */
+.form-Text.mantine-InputWrapper-label {
+    font-family: "Exo 2", sans-serif;
+    font-weight: 400;
+}
+
+.contacts {
+    padding-top: 80px;
+    padding-bottom: 80px;
+}
+
+/* contact section end  */
+/* footer section start  */
+.footer {
+    background-image: url("../assets/img/footer-bg.svg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.footer-text {
+    font-family: "Geist", sans-serif;
+    font-weight: 700;
+}
+
+.footer-text2 {
+    font-family: "Geist", sans-serif;
+    font-weight: 100;
+    line-height: 25px;
+    font-size: 15px;
+}
+.playstore{
+    background: linear-gradient(135deg, #B73A3E 0%, #9F312F 100%);
+}
+.app-download{
+    color: white;
+    font-family: "Geist", sans-serif;
+    font-size: 20px;
+    font-weight: 100;
+    text-align: center;
+}
+/* footer section end  */

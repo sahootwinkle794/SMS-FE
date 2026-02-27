@@ -1,0 +1,282 @@
+"use client";
+
+import {
+  Modal,
+  Grid,
+  TextInput,
+  Textarea,
+  Button,
+  Group,
+  Stack,
+  NumberInput,
+  Select,
+} from "@mantine/core";
+import { useState, useEffect, useMemo } from "react";
+import { useMantineTheme } from "@mantine/core";
+import { ServiceFormState } from "../../../../../types/admin/societyManagement/services/serviceSetup/serviceSetup"
+import { STATUS_OPTIONS, SERVICE_TYPE_OPTIONS, REGEX } from "@/utils/constants";
+
+
+interface ServiceSetupModalFormProps {
+  opened: boolean;
+  editing: ServiceFormState | null;
+  onClose: () => void;
+  onSubmit: (data: ServiceFormState) => Promise<void>;
+}
+
+const ServiceSetupModalForm = ({
+  opened,
+  editing,
+  onClose,
+  onSubmit,
+}: ServiceSetupModalFormProps) => {
+  const theme = useMantineTheme();
+
+  const [form, setForm] = useState<ServiceFormState>({
+    serviceCode: "",
+    serviceName: "",
+    description: "",
+    serviceType: "",
+    iconUrl: "",
+    displayOrder: undefined,
+    status: "",
+  });
+  const [errors, setErrors] = useState<Partial<Record<keyof ServiceFormState, string>>>({});
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Populate form in edit mode
+  const editingFormState = useMemo(() => {
+    if (!editing) return null;
+    return { ...editing };
+  }, [editing]);
+
+  useEffect(() => {
+    if (opened) {
+      setErrors({});
+      if (editingFormState) {
+        setForm(editingFormState);
+      } else {
+        setForm({
+          serviceCode: "",
+          serviceName: "",
+          description: "",
+          serviceType: "",
+          iconUrl: "",
+          displayOrder: undefined,
+          status: ""
+        });
+      }
+    }
+  }, [opened, editingFormState]);
+
+
+
+  const handleInputChange = <K extends keyof ServiceFormState>(
+    field: K,
+    value: ServiceFormState[K]
+  ) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
+    });
+  };
+
+  const validateForm = () => {
+    const newErrors: Partial<Record<keyof ServiceFormState, string>> = {};
+
+    // Service Code
+    if (!form.serviceCode.trim()) {
+      newErrors.serviceCode = "Service Code is required";
+    } else if (!REGEX.SOCIETY_CODE.test(form.serviceCode)) {
+      newErrors.serviceCode = "Invalid Service Code format";
+    }
+
+    // Service Name
+    if (!form.serviceName.trim()) {
+      newErrors.serviceName = "Service Name is required";
+    }
+
+    if (!form.serviceType.trim()) {
+      newErrors.serviceType = "Service Type is required"
+    }
+    if (form.status === "" || form.status === null || form.status === undefined) {
+      newErrors.status = "Status is required";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+    setIsSubmitting(true);
+    try {
+      await onSubmit(form);
+    } catch (error) {
+      console.error("Error submitting service:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={editing ? "Edit Service" : "Add Service"}
+      size="lg"
+      styles={{
+        header: {
+          backgroundColor: theme.colors.primary[5],
+          color: "white",
+          padding: "16px 20px",
+          margin: "-1px -1px 16px -1px",
+        },
+        title: {
+          color: "white",
+          fontWeight: 600,
+        },
+        close: {
+          color: "white",
+        },
+      }}
+    >
+      <Stack gap="md">
+        <Grid>
+          <Grid.Col span={{ base: 12, sm: 6 }}>
+            <TextInput
+              label="Service Code"
+              value={form.serviceCode}
+              error={errors.serviceCode}
+              onChange={(e) =>
+                handleInputChange("serviceCode", e.target.value)
+              }
+              required
+              disabled={editing ? true : isSubmitting}
+              size="sm"
+            />
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, sm: 6 }}>
+            <TextInput
+              label="Service Name"
+              value={form.serviceName}
+              error={errors.serviceName}
+              onChange={(e) =>
+                handleInputChange("serviceName", e.target.value)
+              }
+              required
+              disabled={isSubmitting}
+              size="sm"
+            />
+          </Grid.Col>
+
+          <Grid.Col span={12}>
+            <Textarea
+              label="Description"
+              value={form.description}
+              onChange={(e) =>
+                handleInputChange("description", e.target.value)
+              }
+              disabled={isSubmitting}
+              minRows={2}
+              size="sm"
+            />
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, sm: 6 }}>
+            <Select
+              label="Service Type"
+              value={form.serviceType}
+              data={SERVICE_TYPE_OPTIONS}
+              error={errors.serviceType}
+              onChange={(value) =>
+                handleInputChange("serviceType", value ?? "")
+              }
+              disabled={isSubmitting}
+              size="sm"
+            />
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, sm: 6 }}>
+            <NumberInput
+              label="Display Order"
+              value={form.displayOrder}
+              onChange={(value) =>
+                handleInputChange(
+                  "displayOrder",
+                  typeof value === "number" ? value : undefined
+                )
+              }
+              min={1}
+              disabled={isSubmitting}
+              size="sm"
+            />
+          </Grid.Col>
+
+
+          <Grid.Col span={{ base: 12, sm: 6 }}>
+            <TextInput
+              label="Icon URL"
+              value={form.iconUrl}
+              onChange={(e) =>
+                handleInputChange("iconUrl", e.target.value)
+              }
+              disabled={isSubmitting}
+              size="sm"
+            />
+          </Grid.Col>
+
+          <Grid.Col
+            span={{ base: 12, sm: 6 }}
+
+          >
+            <Select
+              label="Status"
+              placeholder="Select Status"
+              required
+              data={STATUS_OPTIONS}
+              value={form?.status?.toString()}
+              error={errors.status}
+              onChange={(value) =>
+                handleInputChange("status", Number(value) as 0 | 1)
+              }
+              disabled={isSubmitting}
+            />
+          </Grid.Col>
+
+        </Grid>
+
+        <Group justify="flex-end" mt="md">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isSubmitting}
+            color="primary.5"
+            size="sm"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            loading={isSubmitting}
+            color="primary.5"
+            size="sm"
+          >
+            Save
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
+  );
+};
+
+export default ServiceSetupModalForm;

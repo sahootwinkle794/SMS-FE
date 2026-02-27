@@ -227,7 +227,12 @@ export const COMMON_MESSAGE = {
   SOCIETY_CREATION_FAILED: "Failed to create society",
   SOCIETY_UPDATE: "Society updated successfully",
   SOCIETY_FETCH: "Failed to fetch Society Details",
-  PACKAGE_TIER_MAPPING_FETCH_FAIL: "Failed to fetch package-tier mapping details",
+  PACKAGE_TIER_MAPPING_FETCH_FAIL:
+    "Failed to fetch package-tier mapping details",
+    PACKAGE_TIER_MAPPING_SAVE_SUCCESS: "Package-tier mapping saved successfully",
+    PACKAGE_TIER_MAPPING_SAVE_FAIL: "Failed to save package-tier mapping details",
+    PACKAGE_TIER_MAPPING_DELETE_SUCCESS: "Package-tier mapping deleted successfully",
+    PACKAGE_TIER_MAPPING_DELETE_FAIL: "Failed to delete package-tier mapping details",
 
   SERVICE_FETCH_FAIL: "Failed to fetch service details",
   SERVICE_UPDATE: "Service details updated successfully",
@@ -239,15 +244,14 @@ export const COMMON_MESSAGE = {
   PACKAGE_DELETED: "Package deleted successfully",
   PACKAGE_FAIL: "Failed to delete package",
   PACKAGE_UPDATED: "Package updated successfully",
-  PACKAGE_ADDED: "Package added successfully"
-
+  PACKAGE_ADDED: "Package added successfully",
 };
 
 export const PAGE_TITLE = {
   SOCIETY_MANAGEMENT: "Society Management",
   SERVICE_CONFIGURATION: "Service Configuration",
   SERVICE_CATEGORY_MAPPING: "Service to Category Mapping",
-  PACKAGE_SET_UP:"Package Set up"
+  PACKAGE_SET_UP: "Package Set up",
 };
 export const FOOTER_TEXT =
   "Content Owned and Maintained by Prath Technologies Pvt. Ltd";
@@ -295,8 +299,9 @@ export const STATUS_OPTIONS = [
 ] as const;
 
 export const STATUS_CONFIG = {
-  1: { label: "Active", color: "success.5" },
   0: { label: "Inactive", color: "primary.5" },
+  1: { label: "Active", color: "success.5" },
+  2: { label: "Pending", color: "warning.5" },
 } as const;
 
 export const buildSvgSrc = (icon?: string | null) => {
@@ -673,3 +678,11 @@ export const BILLING_CYCLE = [
   { value: "YEARLY", label: "Yearly" },
   { value: "CUSTOM", label: "Custom" },
 ];
+
+export const SERVICE_TYPE_OPTIONS = [
+  { value: "INTERNAL", label: "Internal" },
+  { value: "EXTERNAL", label: "External" },
+] as const;
+
+export type SERVICE_TYPE_INTERFACE =
+  (typeof SERVICE_TYPE_OPTIONS)[number]["value"];
