@@ -257,7 +257,6 @@ export const PAGE_TITLE = {
   SERVICE_CONFIGURATION: "Service Configuration",
   SERVICE_CATEGORY_MAPPING: "Service to Category Mapping",
   PACKAGE_SET_UP: "Package Set up",
-  SERVICE_SET_UP:"Service Set up"
 };
 export const FOOTER_TEXT =
   "Content Owned and Maintained by Prath Technologies Pvt. Ltd";
@@ -547,5 +546,3 @@ export const SERVICE_TYPE_OPTIONS = [
 
 export type SERVICE_TYPE_INTERFACE =
   (typeof SERVICE_TYPE_OPTIONS)[number]["value"];
-
-  export const GEN_CODE_SERVICE_CATEGORY="SERVICE_CATEGORY"

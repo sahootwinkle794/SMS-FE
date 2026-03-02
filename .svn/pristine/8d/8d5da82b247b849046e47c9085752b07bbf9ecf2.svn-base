@@ -16,6 +16,7 @@ import {
   SocialLink,
   FooterSection,
 } from "../types";
+import fonts from "../assets/fonts/fonts.css";
 
 // Color Theme
 export const COLORS = {

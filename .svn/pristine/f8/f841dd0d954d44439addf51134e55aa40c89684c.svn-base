@@ -1,0 +1,150 @@
+"use client";
+
+import {
+  Container,
+  Grid,
+  Stack,
+  Group,
+  Box,
+  Text,
+  Anchor,
+  ActionIcon,
+  Button,
+  Title,
+} from "@mantine/core";
+import Link from "next/link";
+import Image from "next/image";
+import {
+  FOOTER_SECTIONS,
+  CONTACT_INFO,
+  SOCIAL_LINKS,
+  BRAND,
+} from "../../constants";
+import { logo, playStore, appStore } from "../../assets/utils/images";
+
+const APP_STORES = [
+  { label: "Play Store", icon: playStore, href: "/#" },
+  { label: "App Store", icon: appStore, href: "/#" },
+] as const;
+
+const CONTACT_ITEMS = [
+  CONTACT_INFO.address,
+  CONTACT_INFO.email,
+  CONTACT_INFO.phone,
+] as const;
+
+export default function Footer() {
+  return (
+    <Box component="footer" className="footer" py={60}>
+      <Container size="xl">
+        <Grid gutter={40}>
+          {/* Brand Section */}
+          <Grid.Col span={{ base: 12, sm: 6, md: 5 }}>
+            <Stack gap="md">
+              <Image src={logo} alt={`${BRAND.name} logo`} />
+              <Text
+                c="rgba(255,255,255,0.8)"
+                size="30px"
+                className="footer-text"
+              >
+                {BRAND.fullName}
+              </Text>
+
+              <Stack gap="sm">
+                {CONTACT_ITEMS.map((item) => (
+                  <Text
+                    key={item}
+                    c="rgba(255,255,255,0.8)"
+                    className="footer-text2"
+                  >
+                    {item}
+                  </Text>
+                ))}
+              </Stack>
+
+              <Group gap="sm">
+                {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
+                  <ActionIcon
+                    key={label}
+                    component="a"
+                    href={href}
+                    variant="light"
+                    color="pink"
+                    size="lg"
+                    radius="xl"
+                    aria-label={label}
+                  >
+                    <Icon size={20} />
+                  </ActionIcon>
+                ))}
+              </Group>
+            </Stack>
+          </Grid.Col>
+
+          {/* Footer Link Sections */}
+          {FOOTER_SECTIONS.map(({ title, links }) => (
+            <Grid.Col key={title} span={{ base: 12, sm: 6, md: 2 }}>
+              <Stack gap="md">
+                <Text fw={700} c="white" size="lg">
+                  {title}
+                </Text>
+                <Stack gap="xs">
+                  {links.map(({ label, href }) => (
+                    <Anchor
+                      key={label}
+                      href={href}
+                      c="rgba(255,255,255,0.8)"
+                      underline="never"
+                      size="sm"
+                    >
+                      {label}
+                    </Anchor>
+                  ))}
+                </Stack>
+              </Stack>
+            </Grid.Col>
+          ))}
+
+          {/* App Download Section */}
+          <Grid.Col span={{ base: 12, sm: 6, md: 2 }}>
+            <Title className="app-download">Download App</Title>
+            <Stack gap="sm" mt="md">
+              {APP_STORES.map(({ label, icon, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  style={{ textDecoration: "none" }}
+                >
+                  <Button
+                    className="playstore"
+                    fullWidth
+                    leftSection={
+                      <Image src={icon} alt={label} width={18} height={18} />
+                    }
+                  >
+                    {label}
+                  </Button>
+                </Link>
+              ))}
+            </Stack>
+          </Grid.Col>
+        </Grid>
+
+        {/* Copyright */}
+        <Box
+          mt={60}
+          pt={30}
+          style={{ borderTop: "1px solid rgba(255,255,255,0.2)" }}
+        >
+          <Text ta="center" c="rgba(255,255,255,0.7)" size="sm">
+            © {new Date().getFullYear()} {BRAND.name} – {BRAND.fullName}. All
+            rights reserved. Developed by{" "}
+            <Text component="span" fw={600} c="white">
+              {BRAND.developer}
+            </Text>
+          </Text>
+        </Box>
+      </Container>
+    </Box>
+  );
+}

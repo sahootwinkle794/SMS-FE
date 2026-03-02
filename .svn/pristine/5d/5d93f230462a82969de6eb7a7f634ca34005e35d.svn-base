@@ -30,7 +30,6 @@ export const API_PATH = {
   UPDATE_AMENITY: `${NEXT_PUBLIC_API_URL2}/amenities`,
   DELETE_AMENITY: `${NEXT_PUBLIC_API_URL2}/amenities`,
   GET_SERVICE_MASTER: `${NEXT_PUBLIC_API_URL2}/services-master`,
-  CATEGORY_SERVICE_MAP: `${NEXT_PUBLIC_API_URL2}/category-service-map`,
   PACKAGE_MAPPING_LIST: `${NEXT_PUBLIC_API_URL2}/package-mappings/list`,
   PACKAGE_MAPPINGS: `${NEXT_PUBLIC_API_URL2}/package-mappings`,
 
