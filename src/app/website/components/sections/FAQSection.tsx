@@ -11,7 +11,8 @@ import {
   Grid,
 } from "@mantine/core";
 import { FAQS, COLORS } from "../../constants";
-import { faqImg } from "../../assets/utils/images";
+import {IMAGE} from "../../assets/utils/images";
+
 
 export default function FAQSection() {
   const [activeFaq, setActiveFaq] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export default function FAQSection() {
             </Accordion>
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 6 }}>
-            <img src={faqImg.src} alt="faqs" />
+            <Image src={IMAGE.FAQ_IMG} alt="faqs" />
           </Grid.Col>
         </Grid>
       </Container>

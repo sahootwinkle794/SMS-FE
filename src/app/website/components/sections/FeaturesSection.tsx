@@ -4,23 +4,17 @@ import {
   Container,
   Grid,
   Box,
-  Stack,
   Title,
   Card,
   Text,
   Group,
-  Badge,
+  Image
 } from "@mantine/core";
 import { Carousel } from "@mantine/carousel";
-import SectionHeader from "../ui/SectionHeader";
-import FeatureCard from "../ui/FeatureCard";
-import { FEATURES, COLORS } from "../../constants";
-import {
-  featureArt,
-  iconFeatureOne,
-  iconFeatureTwo,
-  iconFeatureThree,
-} from "../../assets/utils/images";
+import "@mantine/carousel/styles.css";
+import { COLORS } from "../../constants";
+import { IMAGE } from "../../assets/utils/images";
+
 
 export default function FeaturesSection() {
   return (
@@ -86,7 +80,7 @@ export default function FeaturesSection() {
                   className="featureCard"
                 >
                   <Group justify="space-between" mt="md" mb="xs">
-                    <img src={iconFeatureOne.src} alt="iconFeatureOne" />
+                    <Image src={IMAGE.ICON_FEATURE_ONE} alt="iconFeatureOne" className="feature-icon"/>
                     <Text size="xl" fw={700} className="Feature-card-text">
                       Simplifies daily operations
                     </Text>
@@ -107,7 +101,7 @@ export default function FeaturesSection() {
                   className="featureCard"
                 >
                   <Group justify="space-between" mt="md" mb="xs">
-                    <img src={iconFeatureTwo.src} alt="iconFeatureOne" />
+                    <Image src={IMAGE.ICON_FEATURE_TWO} alt="iconFeatureOne" className="feature-icon"/>
                     <Text size="xl" fw={700} className="Feature-card-text">
                       Automates finances & communication
                     </Text>
@@ -128,7 +122,7 @@ export default function FeaturesSection() {
                   className="featureCard"
                 >
                   <Group justify="space-between" mt="md" mb="xs">
-                    <img src={iconFeatureThree.src} alt="iconFeatureOne" />
+                    <Image src={IMAGE.ICON_FEATURE_THREE} alt="iconFeatureOne" className="feature-icon"/>
                     <Text size="xl" fw={700} className="Feature-card-text">
                       Strengthens Security
                     </Text>
@@ -148,7 +142,7 @@ export default function FeaturesSection() {
                   className="featureCard"
                 >
                   <Group justify="space-between" mt="md" mb="xs">
-                    <img src={iconFeatureOne.src} alt="iconFeatureOne" />
+                    <Image src={IMAGE.ICON_FEATURE_ONE} alt="iconFeatureOne" className="feature-icon"/>
                     <Text size="xl" fw={700} className="Feature-card-text">
                       Simplifies daily operations
                     </Text>
@@ -169,7 +163,7 @@ export default function FeaturesSection() {
                   className="featureCard"
                 >
                   <Group justify="space-between" mt="md" mb="xs">
-                    <img src={iconFeatureTwo.src} alt="iconFeatureOne" />
+                    <Image src={IMAGE.ICON_FEATURE_TWO} alt="iconFeatureOne" className="feature-icon"/>
                     <Text size="xl" fw={700} className="Feature-card-text">
                       Simplifies daily operations
                     </Text>
@@ -198,7 +192,9 @@ export default function FeaturesSection() {
           ))}
         </Grid> */}
       </Container>
-      <img src={featureArt.src} alt="Feature Art" />
+      <Image src= {IMAGE.FEATURE_ART} alt="Feature Art" />
     </Box>
   );
 }
+
+

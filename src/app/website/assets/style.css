@@ -1,10 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Outfit:wght@100..900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Outfit:wght@100..900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&family=Geist:wght@100..900&display=swap');
-
+@import "./fonts/fonts.css";
 
 .header,
 .hero,
@@ -25,7 +19,7 @@
 
 .btn-text {
     font-family: "Roboto", sans-serif;
-    font-weight: 100;
+    font-weight: 400;
 }
 
 /* header section end  */
@@ -41,11 +35,12 @@
 
 .hero-text {
     font-family: "Geist", sans-serif;
+    font-weight: 300;
 }
 
 .hero-btn {
     font-family: "Raleway", sans-serif;
-    font-weight: 200;
+    font-weight: 100;
     padding: 10px 60px;
 }
 
@@ -57,7 +52,10 @@
     margin-bottom: 22px;
 
 }
-
+.feature-icon{
+    width: 80px;
+    height: auto;
+}
 .feature-con {
     padding-bottom: 80px;
 }
@@ -112,7 +110,7 @@
 }
 
 .Feature-card-text {
-    font-size: 30px;
+    font-size: 25px;
     line-height: 30px;
     font-family: "Geist", sans-serif;
 

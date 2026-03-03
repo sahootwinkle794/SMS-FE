@@ -21,15 +21,15 @@ import {
   SOCIAL_LINKS,
   BRAND,
 } from "../../constants";
-import { logo, playStore, appStore } from "../../assets/utils/images";
+import { IMAGE } from "../../assets/utils/images";
 
 // ─── Static constants outside component (zero re-creation cost) ───────────────
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 const APP_STORES = [
-  { label: "Play Store", icon: playStore, href: "/#" },
-  { label: "App Store", icon: appStore, href: "/#" },
+  { label: "Play Store", icon: IMAGE.PLAY_STORE, href: "/#" },
+  { label: "App Store", icon: IMAGE.APP_STORE, href: "/#" },
 ] as const;
 
 const CONTACT_ITEMS = [
@@ -44,9 +44,9 @@ const BORDER_STYLE = { borderTop: "1px solid rgba(255,255,255,0.2)" } as const;
 
 const BrandSection = memo(function BrandSection() {
   return (
-    <Grid.Col span={{ base: 12, sm: 6, md: 5 }}>
+    <Grid.Col span={{ base: 12, sm: 6, md: 5 }}> 
       <Stack gap="md">
-        <Image src={logo} alt={`${BRAND.name} logo`} priority />
+        <Image src={IMAGE.LOGO} alt="logo" width={100} height={80} />
 
         <Text c="rgba(255,255,255,0.8)" size="30px" className="footer-text">
           {BRAND.fullName}

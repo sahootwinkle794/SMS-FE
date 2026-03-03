@@ -10,11 +10,12 @@ import {
   TextInput,
   Textarea,
   Button,
-  SimpleGrid,
+  Image
 } from "@mantine/core";
 import { COLORS } from "../../constants";
-import { Span } from "next/dist/trace";
-import {arrowImg} from "../../assets/utils/images";
+// import { Span } from "next/dist/trace";
+import {IMAGE} from "../../assets/utils/images";
+
 
 export default function ContactSection() {
   return (
@@ -116,8 +117,8 @@ export default function ContactSection() {
                     variant="gradient"
                     gradient={{ from: "#FF7853", to: "#FF2C36", deg: 135 }}
                     rightSection={
-                      <img
-                        src={arrowImg.src}
+                      <Image
+                        src={IMAGE.ARROW_IMG}
                         width={18}
                         height={18}
                         alt="icon"
@@ -146,6 +147,6 @@ export default function ContactSection() {
   );
 }
 
-function Box(props: any) {
+function Box(props: React.HTMLAttributes<HTMLDivElement>) {
   return <div {...props} />;
 }

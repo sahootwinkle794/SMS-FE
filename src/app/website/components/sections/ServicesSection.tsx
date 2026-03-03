@@ -1,15 +1,11 @@
 "use client";
 
-import { Container, Grid, Stack, Box, Title, Button } from "@mantine/core";
+import { Container, Grid, Stack, Box, Title, Button,Image } from "@mantine/core";
 import ServiceItem from "../ui/ServiceItem";
 import { SERVICES, COLORS } from "../../constants";
 import { Carousel } from "@mantine/carousel";
-import {
-  dashBoard,
-  iconServeOne,
-  iconServeTwo,
-  iconServeThree,
-} from "../../assets/utils/images";
+import {IMAGE} from "../../assets/utils/images";
+
 
 export default function ServicesSection() {
   return (
@@ -34,8 +30,8 @@ export default function ServicesSection() {
                 WHO WE SERVE ?
               </Title>
               <Stack gap="md">
-                <img
-                  src={iconServeOne.src}
+                <Image
+                  src={IMAGE.ICON_SERVE_ONE}
                   alt="iconServeOne"
                   className="who-icon"
                 />
@@ -46,8 +42,8 @@ export default function ServicesSection() {
                 </Title>
               </Stack>
               <Stack gap="md">
-                <img
-                  src={iconServeTwo.src}
+                <Image
+                  src={IMAGE.ICON_SERVE_TWO}
                   alt="iconServeTwo"
                   className="who-icon"
                 />
@@ -58,8 +54,8 @@ export default function ServicesSection() {
                 </Title>
               </Stack>
               <Stack gap="md">
-                <img
-                  src={iconServeThree.src}
+                <Image
+                  src={IMAGE.ICON_SERVE_THREE}
                   alt="iconServeThree"
                   className="who-icon"
                 />
@@ -107,8 +103,8 @@ export default function ServicesSection() {
                   One App for Residents. Three Panels for Admins. One Central
                   Dashboard for Site Managers.
                 </Title>
-                <img
-                  src={dashBoard.src}
+                <Image
+                  src={IMAGE.DASH_BOARD}
                   alt="dashBoard"
                   className="dashboard-img"
                 />
@@ -122,8 +118,8 @@ export default function ServicesSection() {
                   One App for Residents. Three Panels for Admins. One Central
                   Dashboard for Site Managers.
                 </Title>
-                <img
-                  src={dashBoard.src}
+                <Image
+                  src={IMAGE.DASH_BOARD}
                   alt="dashBoard"
                   className="dashboard-img"
                 />
@@ -137,8 +133,8 @@ export default function ServicesSection() {
                   One App for Residents. Three Panels for Admins. One Central
                   Dashboard for Site Managers.
                 </Title>
-                <img
-                  src={dashBoard.src}
+                <Image
+                  src={IMAGE.DASH_BOARD}
                   alt="dashBoard"
                   className="dashboard-img"
                 />

@@ -3,19 +3,19 @@
 import { Container, Group, Box, Text, Button } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { downloadImg, loginImg } from "../../assets/utils/images";
+import {IMAGE} from "../../assets/utils/images";
 
 const HEADER_BUTTONS = [
   {
     label: "Download App",
-    icon: downloadImg,
+    icon: IMAGE.DOWNLOAD_IMG,
     variant: "gradient" as const,
     gradient: { from: "#FF7853", to: "#FF2C36", deg: 135 },
     href: "https://play.google.com/store/apps/details",
   },
   {
     label: "Login",
-    icon: loginImg,
+    icon: IMAGE.LOGIN_IMG,
     variant: "outline" as const,
     color: "#FF4C8E",
     href: "/auth/login",

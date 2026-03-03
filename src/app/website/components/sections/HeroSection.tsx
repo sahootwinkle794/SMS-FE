@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { IconChevronRight } from "@tabler/icons-react";
 import { COLORS } from "../../constants";
-import { mobileImg } from "../../assets/utils/images";
+import {IMAGE} from "../../assets/utils/images";
 import { Righteous } from "next/font/google";
 
 export default function HeroSection() {
@@ -32,7 +32,6 @@ export default function HeroSection() {
               <Title
                 order={1}
                 size={46}
-                fw={100}
                 c="white"
                 style={{ lineHeight: 1.2 }}
                 className="hero-text"
@@ -41,7 +40,7 @@ export default function HeroSection() {
                 <br />
                 <Text
                   className="hero-text"
-                  fw={600}
+                  fw={800}
                   component="span"
                   inherit
                   style={{
@@ -89,7 +88,7 @@ export default function HeroSection() {
                   borderRadius: 40,
                 }}
               >
-                <Image src={mobileImg.src} alt="Mobile UI Preview" />
+                <Image src={IMAGE.MOBILE_IMG} alt="Mobile UI Preview" />
               </Box>
             </Box>
           </Grid.Col>
