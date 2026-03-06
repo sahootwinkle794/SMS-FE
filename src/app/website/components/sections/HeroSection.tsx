@@ -80,6 +80,7 @@ export default function HeroSection() {
           <Grid.Col span={{ base: 12, md: 6 }}>
             <Box style={{ position: "relative", textAlign: "center" }}>
               <Box
+              className="mobile-ui"
                 style={{
                   width: "100%",
                   maxWidth: 246,

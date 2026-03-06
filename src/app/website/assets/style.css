@@ -40,7 +40,7 @@
 
 .hero-btn {
     font-family: "Raleway", sans-serif;
-    font-weight: 100;
+    font-weight: 600;
     padding: 10px 60px;
 }
 
@@ -52,10 +52,12 @@
     margin-bottom: 22px;
 
 }
-.feature-icon{
-    width: 80px;
+
+.feature-icon {
+    width: 53px;
     height: auto;
 }
+
 .feature-con {
     padding-bottom: 80px;
 }
@@ -180,12 +182,12 @@
     font-size: 15px;
     color: white;
     font-family: "Outfit", sans-serif;
-    font-weight: 400;
+    font-weight: 200;
 }
 
 .who-btn {
     font-family: "Raleway", sans-serif;
-    font-weight: 100;
+    font-weight: 400;
 }
 
 /* services section end  */
@@ -210,7 +212,7 @@
 .contact-title3 {
     font-family: "Outfit", sans-serif;
     font-size: 25px;
-    font-weight: 100;
+    font-weight: 300;
 }
 
 .highlight {
@@ -231,7 +233,42 @@
 }
 
 /* contact section end  */
+/* faq section start  */
+.faq-head {
+    font-family: "Geist", sans-serif;
+    font-weight: 700;
+}
+
+.faq-Qsn {
+    font-family: "Geist", sans-serif;
+    font-weight: 400;
+}
+
+.faq-Ans {
+    font-family: "Geist", sans-serif;
+    font-weight: 400;
+}
+
+/* faq section end  */
 /* footer section start  */
+.copy-text {
+    display: flex;
+    justify-content: flex-start;
+    font-family: "Raleway", sans-serif;
+    font-weight: 200;
+}
+
+.footer-logo {
+    width: 100px;
+    height: auto;
+}
+
+.footer-link {
+    font-family: "Geist", sans-serif;
+    font-weight: 200;
+    font-size: 18px;
+}
+
 .footer {
     background-image: url("../assets/img/footer-bg.svg");
     background-size: cover;
@@ -242,24 +279,105 @@
 .footer-text {
     font-family: "Geist", sans-serif;
     font-weight: 700;
+    font-size: 23px;
 }
 
 .footer-text2 {
     font-family: "Geist", sans-serif;
-    font-weight: 100;
+    font-weight: 200;
     line-height: 25px;
     font-size: 15px;
+    font-size: 18px;
+    /* position: relative;
+    padding-left: 12px; */
 }
-.playstore{
+
+/* .footer-text2::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 5px;
+    height: 5px;
+    background: black;
+    border-radius: 50%;
+} */
+
+.playstore {
     background: linear-gradient(135deg, #B73A3E 0%, #9F312F 100%);
 }
-.app-download{
+
+.app-download {
     color: white;
     font-family: "Geist", sans-serif;
     font-size: 20px;
     font-weight: 100;
     text-align: center;
 }
+
 /* footer section end  */
 
+/* Mobile responsive start  */
+   
+@media (min-width: 300px) and (max-width: 700px) {
+    .hero-text {
+        margin-top: 60px;
+    }
 
+    .hero {
+        background-position: left;
+    }
+
+    .mobile-ui {
+        max-width: 100% !important;
+    }
+    .mobile-ui img{
+         max-width: 100%;
+    }
+    .service {
+        background-image: url("../assets/img/footer-bg.svg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        color: white;
+    }
+
+    .serve-title1 {
+        color: white;
+    }
+    .social-ft{
+        display: flex;
+        justify-content: center;
+    }
+}
+@media (min-width: 701px) and (max-width: 900px) {
+    .hero-text {
+        margin-top: 60px;
+    }
+
+    .hero {
+        background-position: left;
+    }
+
+    .mobile-ui {
+        max-width: 100% !important;
+    }
+    .mobile-ui img{
+         max-width: 100%;
+    }
+    .service {
+        background-image: url("../assets/img/footer-bg.svg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        color: white;
+    }
+
+    .serve-title1 {
+        color: white;
+    }
+    .social-ft{
+        display: flex;
+        justify-content: center;
+    }
+}

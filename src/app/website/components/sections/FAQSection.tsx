@@ -28,7 +28,7 @@ export default function FAQSection() {
         <Grid gutter={60}>
           <Grid.Col span={{ base: 12, md: 6 }}>
             <Stack gap="xl" mb={60}>
-              <Text component="h2" size="42px" fw={900}>
+              <Text component="h2" size="42px" className="faq-head">
                 FAQs on SMS
               </Text>
             </Stack>
@@ -42,12 +42,12 @@ export default function FAQSection() {
               {FAQS.map((faq, idx) => (
                 <Accordion.Item key={idx} value={`faq-${idx}`}>
                   <Accordion.Control>
-                    <Text fw={400} size="18px">
+                    <Text fw={400} size="18px" className="faq-Qsn">
                       {faq.question}
                     </Text>
                   </Accordion.Control>
                   <Accordion.Panel>
-                    <Text c="dimmed">{faq.answer}</Text>
+                    <Text c="dimmed" className="faq-Ans">{faq.answer}</Text>
                   </Accordion.Panel>
                 </Accordion.Item>
               ))}

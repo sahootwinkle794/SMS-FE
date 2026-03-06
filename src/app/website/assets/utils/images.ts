@@ -17,6 +17,9 @@ import faqImg from "../img/FAQ.svg";
 import footerBg from "../img/footer-bg.svg";
 import playStore from "../img/playstore.svg";
 import appStore from "../img/appstore.svg";
+import faceBook from "../img/fb.svg";
+import twitter from "../img/twitt.svg";
+import linkedIn from "../img/linkedin.svg";
 
 export const IMAGE = {
   LOGO: logo.src,
@@ -38,4 +41,7 @@ export const IMAGE = {
   FOOTER_BG: footerBg.src,
   PLAY_STORE: playStore.src,
   APP_STORE: appStore.src,
+  FACE_BOOK: faceBook.src,
+  TWITTER: twitter.src,
+  LINKED_IN: linkedIn.src,
 };

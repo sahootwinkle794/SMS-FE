@@ -1,23 +1,23 @@
 @font-face {
   font-family: "Geist";
   src: url("./Geist-VariableFont_wght.ttf") format("truetype");
-  font-weight: 300 400 800;
+ font-weight: 100 400 500 600 700 800;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Roboto";
   src: url("./Roboto-VariableFont_wdth\,wght.ttf") format("truetype");
-  font-weight: 100 400;
+  font-weight: 100 400 500 600 700 800;
   font-style: normal;
 }
 @font-face {
   font-family: "Raleway";
   src: url("./Raleway-VariableFont_wght.ttf") format("truetype");
-  font-weight: 100 400;
+  font-weight: 100 400 500 600 700 800;
 }
 @font-face {
   font-family: "Outfit";
   src: url("./Outfit-VariableFont_wght.ttf") format("truetype");
-  font-weight: 100 400 600;
-}
+  font-weight: 100 400 500 600 700 800;
+}  

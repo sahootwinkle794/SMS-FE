@@ -12,9 +12,10 @@ import {
   ActionIcon,
   Button,
   Title,
+  Image
 } from "@mantine/core";
 import Link from "next/link";
-import Image from "next/image";
+// import Image from "next/image";
 import {
   FOOTER_SECTIONS,
   CONTACT_INFO,
@@ -44,9 +45,9 @@ const BORDER_STYLE = { borderTop: "1px solid rgba(255,255,255,0.2)" } as const;
 
 const BrandSection = memo(function BrandSection() {
   return (
-    <Grid.Col span={{ base: 12, sm: 6, md: 5 }}> 
+    <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
       <Stack gap="md">
-        <Image src={IMAGE.LOGO} alt="logo" width={100} height={80} />
+        <Image src={IMAGE.LOGO} alt="logo" className="footer-logo" />
 
         <Text c="rgba(255,255,255,0.8)" size="30px" className="footer-text">
           {BRAND.fullName}
@@ -60,7 +61,7 @@ const BrandSection = memo(function BrandSection() {
           ))}
         </Stack>
 
-        <Group gap="sm">
+        {/* <Group gap="sm">
           {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
             <ActionIcon
               key={label}
@@ -75,7 +76,7 @@ const BrandSection = memo(function BrandSection() {
               <Icon size={20} />
             </ActionIcon>
           ))}
-        </Group>
+        </Group> */}
       </Stack>
     </Grid.Col>
   );
@@ -86,7 +87,7 @@ const LinkSection = memo(function LinkSection({
   links,
 }: (typeof FOOTER_SECTIONS)[number]) {
   return (
-    <Grid.Col span={{ base: 12, sm: 6, md: 2 }}>
+    <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
       <Stack gap="md">
         <Text fw={700} c="white" size="lg">
           {title}
@@ -94,6 +95,7 @@ const LinkSection = memo(function LinkSection({
         <Stack gap="xs">
           {links.map(({ label, href }) => (
             <Anchor
+              className="footer-link"
               key={label}
               href={href}
               c="rgba(255,255,255,0.8)"
@@ -111,7 +113,7 @@ const LinkSection = memo(function LinkSection({
 
 const AppDownloadSection = memo(function AppDownloadSection() {
   return (
-    <Grid.Col span={{ base: 12, sm: 6, md: 2 }}>
+    <Grid.Col span={{ base: 12, sm: 6, md: 2 }} className="apps">
       <Title className="app-download">Download App</Title>
       <Stack gap="sm" mt="md">
         {APP_STORES.map(({ label, icon, href }) => (
@@ -136,13 +138,33 @@ const AppDownloadSection = memo(function AppDownloadSection() {
 const Copyright = memo(function Copyright() {
   return (
     <Box mt={60} pt={30} style={BORDER_STYLE}>
-      <Text ta="center" c="rgba(255,255,255,0.7)" size="sm">
-        © {CURRENT_YEAR} {BRAND.name} – {BRAND.fullName}. All rights reserved.{" "}
-        Developed by{" "}
-        <Text component="span" fw={600} c="white">
-          {BRAND.developer}
-        </Text>
-      </Text>
+      <Grid align="center">
+        <Grid.Col span={{ base: 12, sm: 6, md: 8 }} className="copy-text">
+          <Text ta="center" c="rgba(255,255,255,0.7)" size="sm">
+            © {CURRENT_YEAR} {BRAND.name} – {BRAND.fullName}. All rights
+            reserved. Developed by{" "}
+            <Text component="span" fw={600} c="white">
+              {BRAND.developer}
+            </Text>
+          </Text>
+        </Grid.Col>
+
+        <Grid.Col span={{ base: 12, sm: 6, md: 4 }} className="social-ft">
+          <Group gap="sm" justify="flex-end" >
+            <Anchor href="https://www.facebook.com" target="_blank">
+              <Image src={IMAGE.FACE_BOOK} alt="Facebook"  />
+            </Anchor>
+
+            <Anchor href="https://www.linkedin.com" target="_blank">
+              <Image src={IMAGE.LINKED_IN} alt="LinkedIn"  />
+            </Anchor>
+
+            <Anchor href="https://www.twitter.com" target="_blank">
+              <Image src={IMAGE.TWITTER} alt="Twitter"  />
+            </Anchor>
+          </Group>
+        </Grid.Col>
+      </Grid>
     </Box>
   );
 });
