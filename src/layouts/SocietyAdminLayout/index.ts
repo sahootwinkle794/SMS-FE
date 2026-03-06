@@ -1,0 +1,1 @@
+export { default as SocietyAdminLayout } from "./SocietyAdminLayout";

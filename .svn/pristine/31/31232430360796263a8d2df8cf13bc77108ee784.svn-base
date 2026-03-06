@@ -1,0 +1,189 @@
+"use client";
+
+import { memo } from "react";
+import {
+  Container,
+  Grid,
+  Stack,
+  Group,
+  Box,
+  Text,
+  Anchor,
+  ActionIcon,
+  Button,
+  Title,
+  Image
+} from "@mantine/core";
+import Link from "next/link";
+// import Image from "next/image";
+import {
+  FOOTER_SECTIONS,
+  CONTACT_INFO,
+  SOCIAL_LINKS,
+  BRAND,
+} from "../../constants";
+import { IMAGE } from "../../assets/utils/images";
+
+// ─── Static constants outside component (zero re-creation cost) ───────────────
+
+const CURRENT_YEAR = new Date().getFullYear();
+
+const APP_STORES = [
+  { label: "Play Store", icon: IMAGE.PLAY_STORE, href: "/#" },
+  { label: "App Store", icon: IMAGE.APP_STORE, href: "/#" },
+] as const;
+
+const CONTACT_ITEMS = [
+  { key: "address", value: CONTACT_INFO.address },
+  { key: "email", value: CONTACT_INFO.email },
+  { key: "phone", value: CONTACT_INFO.phone },
+] as const;
+
+const BORDER_STYLE = { borderTop: "1px solid rgba(255,255,255,0.2)" } as const;
+
+// ─── Sub-components (memoized to prevent unnecessary re-renders) ──────────────
+
+const BrandSection = memo(function BrandSection() {
+  return (
+    <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+      <Stack gap="md">
+        <Image src={IMAGE.LOGO} alt="logo" className="footer-logo" />
+
+        <Text c="rgba(255,255,255,0.8)" size="30px" className="footer-text">
+          {BRAND.fullName}
+        </Text>
+
+        <Stack gap="sm">
+          {CONTACT_ITEMS.map(({ key, value }) => (
+            <Text key={key} c="rgba(255,255,255,0.8)" className="footer-text2">
+              {value}
+            </Text>
+          ))}
+        </Stack>
+
+        {/* <Group gap="sm">
+          {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
+            <ActionIcon
+              key={label}
+              component="a"
+              href={href}
+              variant="light"
+              color="pink"
+              size="lg"
+              radius="xl"
+              aria-label={label}
+            >
+              <Icon size={20} />
+            </ActionIcon>
+          ))}
+        </Group> */}
+      </Stack>
+    </Grid.Col>
+  );
+});
+
+const LinkSection = memo(function LinkSection({
+  title,
+  links,
+}: (typeof FOOTER_SECTIONS)[number]) {
+  return (
+    <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
+      <Stack gap="md">
+        <Text fw={700} c="white" size="lg">
+          {title}
+        </Text>
+        <Stack gap="xs">
+          {links.map(({ label, href }) => (
+            <Anchor
+              className="footer-link"
+              key={label}
+              href={href}
+              c="rgba(255,255,255,0.8)"
+              underline="never"
+              size="sm"
+            >
+              {label}
+            </Anchor>
+          ))}
+        </Stack>
+      </Stack>
+    </Grid.Col>
+  );
+});
+
+const AppDownloadSection = memo(function AppDownloadSection() {
+  return (
+    <Grid.Col span={{ base: 12, sm: 6, md: 2 }} className="apps">
+      <Title className="app-download">Download App</Title>
+      <Stack gap="sm" mt="md">
+        {APP_STORES.map(({ label, icon, href }) => (
+          <Link key={label} href={href} style={{ textDecoration: "none" }}>
+            <Button
+              size="lg"
+              className="playstore"
+              fullWidth
+              leftSection={
+                <Image src={icon} alt={label} width={18} height={18} />
+              }
+            >
+              {label}
+            </Button>
+          </Link>
+        ))}
+      </Stack>
+    </Grid.Col>
+  );
+});
+
+const Copyright = memo(function Copyright() {
+  return (
+    <Box mt={60} pt={30} style={BORDER_STYLE}>
+      <Grid align="center">
+        <Grid.Col span={{ base: 12, sm: 6, md: 8 }} className="copy-text">
+          <Text ta="center" c="rgba(255,255,255,0.7)" size="sm">
+            © {CURRENT_YEAR} {BRAND.name} – {BRAND.fullName}. All rights
+            reserved. Developed by{" "}
+            <Text component="span" fw={600} c="white">
+              {BRAND.developer}
+            </Text>
+          </Text>
+        </Grid.Col>
+
+        <Grid.Col span={{ base: 12, sm: 6, md: 4 }} className="social-ft">
+          <Group gap="sm" justify="flex-end" >
+            <Anchor href="https://www.facebook.com" target="_blank">
+              <Image src={IMAGE.FACE_BOOK} alt="Facebook"  />
+            </Anchor>
+
+            <Anchor href="https://www.linkedin.com" target="_blank">
+              <Image src={IMAGE.LINKED_IN} alt="LinkedIn"  />
+            </Anchor>
+
+            <Anchor href="https://www.twitter.com" target="_blank">
+              <Image src={IMAGE.TWITTER} alt="Twitter"  />
+            </Anchor>
+          </Group>
+        </Grid.Col>
+      </Grid>
+    </Box>
+  );
+});
+
+// ─── Main Footer ──────────────────────────────────────────────────────────────
+
+export default function Footer() {
+  return (
+    <Box component="footer" className="footer" py={60}>
+      <Container size="xl">
+        <Grid gutter={40}>
+          <BrandSection />
+          {FOOTER_SECTIONS.map((section) => (
+            <LinkSection key={section.title} {...section} />
+          ))}
+          <AppDownloadSection />
+        </Grid>
+        <Copyright />
+      </Container>
+    </Box>
+  );
+}
