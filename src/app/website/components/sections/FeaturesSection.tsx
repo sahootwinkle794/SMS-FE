@@ -16,8 +16,11 @@ import "@mantine/carousel/styles.css";
 import { COLORS } from "../../constants";
 import { IMAGE } from "../../assets/utils/images";
 import { useIntersection } from "@mantine/hooks";
+import Autoplay from "embla-carousel-autoplay";
+import { useRef } from "react";
 
 export default function FeaturesSection() {
+  const autoplay = useRef(Autoplay({ delay: 3000, stopOnInteraction: false }));
   const { ref, entry } = useIntersection({
     threshold: 0.3,
   });
@@ -71,12 +74,15 @@ export default function FeaturesSection() {
               height={370}
               slideSize="33.333333%"
               slideGap="md"
+              plugins={[autoplay.current]}
               emblaOptions={{
                 loop: true,
                 align: "start",
-                slidesToScroll: 3,
+                slidesToScroll: 1,
                 dragFree: false,
               }}
+              onMouseEnter={autoplay.current.stop}
+              onMouseLeave={autoplay.current.reset}
               styles={{
                 control: {
                   backgroundColor: "red",

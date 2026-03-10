@@ -5,4 +5,5 @@ export interface MenuItem {
   label: string;
   badge?: string;
   isAccess?: boolean;
+  section?: "amenities" | "services";
 }

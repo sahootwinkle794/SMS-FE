@@ -9,8 +9,9 @@ import {
   Group,
   Tooltip,
   Switch,
+  Badge,
 } from "@mantine/core";
-import {IconArrowLeft,IconCaretRightFilled } from "@tabler/icons-react";
+import { IconArrowLeft, IconCaretRightFilled } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import styles from "./AppBreadcrumbs.module.css";
 
@@ -28,6 +29,7 @@ interface AppBreadcrumbsProps {
   switchLabel?: string;
   switchChecked?: boolean;
   onSwitchChange?: (checked: boolean) => void;
+  newCount?: number;// New count badge
 }
 
 export default function AppBreadcrumbs({
@@ -37,13 +39,14 @@ export default function AppBreadcrumbs({
   switchLabel = "Enable",
   switchChecked = false,
   onSwitchChange,
+  newCount,
 }: AppBreadcrumbsProps) {
   const router = useRouter();
   const theme = useMantineTheme();
 
   const handleNavigation = (path: string | (() => void)) => {
-    if (typeof path === 'function') {
-      path(); // Execute custom function
+    if (typeof path === "function") {
+      path();
     } else {
       router.push(path);
     }
@@ -58,7 +61,10 @@ export default function AppBreadcrumbs({
     >
       <Group justify="space-between" align="center">
         {/* Left: Breadcrumbs */}
-        <Breadcrumbs separator={<IconCaretRightFilled size={20} />} className={styles.breadcrumbs}>
+        <Breadcrumbs
+          separator={<IconCaretRightFilled size={20} />}
+          className={styles.breadcrumbs}
+        >
           {items.map((item, idx) => {
             const isLast = idx === items.length - 1;
 
@@ -90,42 +96,53 @@ export default function AppBreadcrumbs({
           })}
         </Breadcrumbs>
 
-        {/* Right: Back Button OR Switch */}
-        {isBackButton && !showSwitch && (
-          <Tooltip label="Go back" withArrow>
-            <ActionIcon
-              radius="xl"
-              size="lg"
-              variant="light"
-              onClick={() => router.back()}
-              style={{
-                backgroundColor: theme.colors.primary[7],
-                color: theme.white,
-              }}
-              styles={{
-                root: {
-                  "&:hover": {
-                    backgroundColor: theme.colors.primary[8],
-                  },
-                },
-              }}
-            >
-              <IconArrowLeft size={18} />
-            </ActionIcon>
-          </Tooltip>
-        )}
+        {/* Right side */}
+        <Group gap="sm">
 
-        {showSwitch && (
-          <Switch
-            size="md"
-            label={switchLabel}
-            checked={switchChecked}
-            onChange={(e) =>
-              onSwitchChange?.(e.currentTarget.checked)
-            }
-            color="primary.5"
-          />
-        )}
+          {/* New Today Badge */}
+          {newCount !== undefined && newCount > 0 && (
+            <Badge color="green" variant="filled" size="md" radius="sm">
+              {newCount} New Today
+            </Badge>
+          )}
+
+          {/* Back Button */}
+          {isBackButton && !showSwitch && (
+            <Tooltip label="Go back" withArrow>
+              <ActionIcon
+                radius="xl"
+                size="lg"
+                variant="light"
+                onClick={() => router.back()}
+                style={{
+                  backgroundColor: theme.colors.primary[7],
+                  color: theme.white,
+                }}
+                styles={{
+                  root: {
+                    "&:hover": {
+                      backgroundColor: theme.colors.primary[8],
+                    },
+                  },
+                }}
+              >
+                <IconArrowLeft size={18} />
+              </ActionIcon>
+            </Tooltip>
+          )}
+
+          {/* Switch */}
+          {showSwitch && (
+            <Switch
+              size="md"
+              label={switchLabel}
+              checked={switchChecked}
+              onChange={(e) => onSwitchChange?.(e.currentTarget.checked)}
+              color="primary.5"
+            />
+          )}
+
+        </Group>
       </Group>
     </Box>
   );

@@ -66,22 +66,19 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onLogout }) => {
             w={300}
           />
 
-          {/* Notification Icon */}
-          <ActionIcon
-            variant="subtle"
-            size={32}
-            radius="xl"
-            c="primary.5"
-            style={(theme) => ({
-              "&:hover": {
-                backgroundColor: theme.colors.primary[1],
-                color: theme.colors.primary[6],
-              },
-            })}
-          >
-            <IconBell size={20} />
-          </ActionIcon>
+          <Box className={styles.notificationWrapper}>
+            <ActionIcon
+              variant="subtle"
+              size={36}
+              radius="xl"
+              c="primary.5"
+              className={styles.glowBell}
+            >
+              <IconBell size={20} />
+            </ActionIcon>
 
+            {/* <Box className={styles.badge}></Box> */}
+          </Box>
           {/* User Menu */}
           <Menu width={180} shadow="md" keepMounted>
             <Menu.Target>
@@ -124,7 +121,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onLogout }) => {
         size="xl"
         title="Profile Setup"
         overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
-        
+
       >
         <ProfileSetup />
       </Modal>

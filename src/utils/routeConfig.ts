@@ -21,5 +21,8 @@ export const RouteConfig = {
   //Society Management Path
   SOCIETY_MGT: "/admin/societyManagement",
   FACILITIES_AND_AMENITIES: "/admin/societyManagement/facandame",
-  SOCIETY_CONFIGURATION:"/admin/societyManagement/services"
+  SOCIETY_CONFIGURATION: "/admin/societyManagement/services",
+
+  //Lead management path
+  LEAD_MGT: "/admin/leadManagement",
 };

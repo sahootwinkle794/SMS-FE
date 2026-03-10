@@ -9,22 +9,22 @@ import {
 import { CORAL, CORAL_DARK, CORAL_LIGHT, PEACH, softCard } from "@/utils/constants";
 import { SocietyBlock, SocietyInfoDrawerProps } from "./SocietyInfoDrawer.types";
 
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const LEVEL_COLOR: Record<string, string> = {
   HIGH: "red", MEDIUM: "yellow", LOW: "green",
 };
 
-const totalUnits = (blocks: SocietyBlock[]) =>
-  blocks.reduce((sum, b) => sum + b.totalFlats, 0);
-
-const totalParking = (blocks: SocietyBlock[]) =>
-  blocks.reduce((sum, b) => sum + b.parkingSlots, 0);
+const totalUnits   = (blocks: SocietyBlock[]) => blocks.reduce((sum, b) => sum + b.totalFlats,    0);
+const totalParking = (blocks: SocietyBlock[]) => blocks.reduce((sum, b) => sum + b.parkingSlots,  0);
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function SocietyInfoDrawer({ opened, onClose, data }: SocietyInfoDrawerProps) {
+
+  // Guard: don't render drawer content if data hasn't loaded yet
+  if (!data) return null;
+
   return (
     <Drawer
       opened={opened}
@@ -58,13 +58,17 @@ export function SocietyInfoDrawer({ opened, onClose, data }: SocietyInfoDrawerPr
           <Box style={{ ...softCard, borderRadius: 16, padding: 20 }}>
             <Group gap="md" align="flex-start">
               <Avatar
-                size={56} radius="xl"
+                size={56}
+                radius="xl"
                 style={{
-                  background: 'white',
-                  fontWeight: 900, fontSize: 22, color: "#fff", flexShrink: 0,
+                  background: `white`,
+                  fontWeight: 900,
+                  fontSize: 22,
+                  color: "#ccc",
+                  flexShrink: 0,
                 }}
               >
-                {data.societyName.charAt(0)}
+                {data.societyName?.charAt(0) ?? "S"}
               </Avatar>
               <Box style={{ flex: 1, minWidth: 0 }}>
                 <Text fw={900} fz="md" c="#1a1a1a" truncate>{data.societyName}</Text>
@@ -88,11 +92,11 @@ export function SocietyInfoDrawer({ opened, onClose, data }: SocietyInfoDrawerPr
           <Box style={{ ...softCard, borderRadius: 16, padding: 20 }}>
             <SectionLabel>Registration</SectionLabel>
             <Stack gap="sm">
-              <InfoRow icon={IconFileDescription} label="Reg. Number"      value={data.registrationNumber}                                      />
-              <InfoRow icon={IconHash}            label="Society Code"     value={data.societyCode}                                             />
-              <InfoRow icon={IconCalendar}        label="Est. Year"        value={String(data.establishmentYear)}                               />
-              <InfoRow icon={IconCalendar}        label="Onboarded"        value={new Date(data.onboardingDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} />
-              <InfoRow icon={IconStack2}          label="Total Area (sqft)"value={`${parseFloat(data.totalArea).toLocaleString("en-IN")} sq.ft`} />
+              <InfoRow icon={IconFileDescription} label="Reg. Number"       value={data.registrationNumber} />
+              <InfoRow icon={IconHash}            label="Society Code"      value={data.societyCode} />
+              <InfoRow icon={IconCalendar}        label="Est. Year"         value={String(data.establishmentYear)} />
+              <InfoRow icon={IconCalendar}        label="Onboarded"         value={new Date(data.onboardingDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} />
+              <InfoRow icon={IconStack2}          label="Total Area (sqft)" value={`${parseFloat(data.totalArea).toLocaleString("en-IN")} sq.ft`} />
             </Stack>
           </Box>
 
@@ -100,10 +104,10 @@ export function SocietyInfoDrawer({ opened, onClose, data }: SocietyInfoDrawerPr
           <Box style={{ ...softCard, borderRadius: 16, padding: 20 }}>
             <SectionLabel>Location</SectionLabel>
             <Stack gap="sm">
-              <InfoRow icon={IconMapPin} label="Address"   value={data.addressLine1}                          />
-              <InfoRow icon={IconMapPin} label="Locality"  value={data.areaLocality}                          />
-              <InfoRow icon={IconMapPin} label="City"      value={`${data.city} — ${data.pincode}`}           />
-              <InfoRow icon={IconMapPin} label="Landmark"  value={data.landmark}                              />
+              <InfoRow icon={IconMapPin} label="Address"  value={data.addressLine1} />
+              <InfoRow icon={IconMapPin} label="Locality" value={data.areaLocality} />
+              <InfoRow icon={IconMapPin} label="City"     value={`${data.city} — ${data.pincode}`} />
+              <InfoRow icon={IconMapPin} label="Landmark" value={data.landmark} />
             </Stack>
           </Box>
 
@@ -123,7 +127,6 @@ export function SocietyInfoDrawer({ opened, onClose, data }: SocietyInfoDrawerPr
               ))}
             </SimpleGrid>
 
-            {/* Block list */}
             <Stack gap="xs">
               {data.blocks.map((block) => (
                 <Group
@@ -146,9 +149,9 @@ export function SocietyInfoDrawer({ opened, onClose, data }: SocietyInfoDrawerPr
           <Box style={{ ...softCard, borderRadius: 16, padding: 20 }}>
             <SectionLabel>Admin Contact</SectionLabel>
             <Stack gap="sm">
-              <InfoRow icon={IconStar}  label="Admin Name"  value={data.adminName}   />
-              <InfoRow icon={IconMail}  label="Email"       value={data.adminEmail}  />
-              <InfoRow icon={IconPhone} label="Mobile"      value={data.adminMobile} />
+              <InfoRow icon={IconStar}  label="Admin Name" value={data.adminName}   />
+              <InfoRow icon={IconMail}  label="Email"      value={data.adminEmail}  />
+              <InfoRow icon={IconPhone} label="Mobile"     value={data.adminMobile} />
             </Stack>
           </Box>
 

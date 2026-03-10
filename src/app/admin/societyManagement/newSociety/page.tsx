@@ -159,7 +159,7 @@ const NewSociety = () => {
       return response?.data;
     } catch (err: unknown) {
       const error = err as ApiError;
-      notifyError(error?.response?.data?.message || COMMON_MESSAGE.SOCIETY_FETCH);
+      notifyError(error?.response?.data?.message || COMMON_MESSAGE.SOCIETY_FETCH_FAIL);
     }
   }, []);
 
@@ -179,7 +179,7 @@ const NewSociety = () => {
       setTotalRecords(response?.data?.total);
     } catch (err) {
       const error = err as ApiError;
-      notifyError(error?.response?.data?.message || COMMON_MESSAGE.SOCIETY_FETCH);
+      notifyError(error?.response?.data?.message || COMMON_MESSAGE.SOCIETY_FETCH_FAIL);
     } finally {
       setLoading(false);
     }

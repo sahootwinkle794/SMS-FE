@@ -14,6 +14,7 @@ import DeviceMockup from "../ui/DeviceMockup";
 import { COLORS } from "../../constants";
 
 export default function HighlightsSection() {
+    
   return (
     <Box className="high" py={80} style={{ backgroundColor: COLORS.lightBg }}>
       <Container size="xl">

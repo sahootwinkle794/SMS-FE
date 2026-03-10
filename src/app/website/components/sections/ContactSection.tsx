@@ -10,41 +10,49 @@ import {
   TextInput,
   Textarea,
   Button,
-  Image
+  Image,
+  Transition,
 } from "@mantine/core";
 import { COLORS } from "../../constants";
 // import { Span } from "next/dist/trace";
-import {IMAGE} from "../../assets/utils/images";
-
+import { IMAGE } from "../../assets/utils/images";
+import { useIntersection } from "@mantine/hooks";
 
 export default function ContactSection() {
+  const { ref, entry } = useIntersection({
+    threshold: 0.3,
+  });
   return (
-    <Box
-      className="contacts"
-      id="contact"
-      style={{ backgroundColor: "white" }}
-    >
-      <Container size="xl">
+    <Box className="contacts" id="contact" style={{ backgroundColor: "white" }}>
+      <Container size="xl" id="contact">
         <Grid gutter={60} align="center">
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Stack gap="xl">
-              <Title className="contact-title">
-                Ready to discuss
-                <br /> your toughest
-                <br />
-                <Text className="contact-title2">tech challenges?</Text>
-              </Title>
-              <Title className="contact-title3">
-                Fill out the form and get on a call within 24-48 hours with our
-                product and tech expert.
-              </Title>
-              <Title className="contact-title3">
-                No account managers –
-                <Text component="span" className="highlight">
-                  that’s a promise.
-                </Text>
-              </Title>
-            </Stack>
+          <Grid.Col span={{ base: 12, md: 6 }} ref={ref}>
+            <Transition
+              mounted={entry?.isIntersecting || false}
+              transition="slide-up"
+              duration={700}
+            >
+              {(styles) => (
+                <Stack gap="xl" style={styles}>
+                  <Title className="contact-title">
+                    Ready to discuss
+                    <br /> your toughest
+                    <br />
+                    <Text className="contact-title2">tech challenges?</Text>
+                  </Title>
+                  <Title className="contact-title3">
+                    Fill out the form and get on a call within 24-48 hours with
+                    our product and tech expert.
+                  </Title>
+                  <Title className="contact-title3">
+                    No account managers –
+                    <Text component="span" className="highlight">
+                      that’s a promise.
+                    </Text>
+                  </Title>
+                </Stack>
+              )}
+            </Transition>
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 6 }}>
             <Paper

@@ -2,7 +2,7 @@ const getServerUrl = () => process.env.NEXT_PUBLIC_API_URL1 ?? "";
 const NEXT_PUBLIC_API_URL1 = process.env.NEXT_PUBLIC_API_URL1;
 const NEXT_PUBLIC_API_URL2 = process.env.NEXT_PUBLIC_API_URL2;
 const NEXT_PUBLIC_API_URL3 = process.env.NEXT_PUBLIC_API_URL3;
-
+const NEXT_PUBLIC_API_URL4=process.env.NEXT_PUBLIC_API_URL4;
 export const API_PATH = {
   // Server-side routes (called from route.ts) - use getter
   get VERIFY_OTP() {
@@ -42,4 +42,8 @@ export const API_PATH = {
   DELETE_TIER_CAT_MAPPING: `${NEXT_PUBLIC_API_URL3}/tier-category-map`,
   CATEGORY_AMENITY_MAPPING: `${NEXT_PUBLIC_API_URL3}/category-amenity-map`,
   PACKAGE_TIER_MAPPING: `${NEXT_PUBLIC_API_URL3}/package-tier-map`,
+
+
+  // SOCIETY CONTENT SERVICE
+  POST_GUEST_USER_PUBLIC:`${NEXT_PUBLIC_API_URL4}/guest-users/public`
 };

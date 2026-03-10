@@ -4,8 +4,8 @@ import { deleteRequest, getRequest, patchRequest, postRequest } from "@/service"
 import { API_PATH } from "@/utils/apiPath";
 import { COMMON_MESSAGE, PAGE_TITLE, RECORDS_PER_PAGE, STATUS_CONFIG } from "@/utils/constants";
 import { RouteConfig } from "@/utils/routeConfig";
-import { ActionIcon, Affix, Badge, Button, Group, Text, Tooltip } from "@mantine/core";
-import { IconEdit, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
+import { ActionIcon, Affix, Badge, Button, Group, Text, Tooltip, Center } from "@mantine/core";
+import { IconEdit, IconPlus, IconTrash, IconX, IconPhoto } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { notifications } from "@mantine/notifications";
 import { Column } from "@/components/DataTable";
@@ -30,6 +30,26 @@ const notifyError = (msg: string) =>
 
 const notifySuccess = (msg: string) =>
   notifications.show({ title: "Successful!", message: msg, color: "green" });
+
+// ── Base64Icon — tries svg+xml first, falls back to png on error ──────────────
+
+const Base64Icon = ({ base64, alt }: { base64: string; alt: string }) => {
+  const [src, setSrc] = useState(`data:image/svg+xml;base64,${base64}`);
+  return (
+    <img
+      src={src}
+      alt={alt}
+      width={28}
+      height={28}
+      style={{ objectFit: "contain", borderRadius: 4 }}
+      onError={() => {
+        if (!src.includes("image/png")) {
+          setSrc(`data:image/png;base64,${base64}`);
+        }
+      }}
+    />
+  );
+};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -90,7 +110,7 @@ const ServiceSetup = () => {
       closeAddEditModal();
       fetchServiceDetails();
     } catch (error: unknown) {
-      console.log("error", error)
+      console.log("error", error);
       const message = error instanceof Error ? error?.message : COMMON_MESSAGE.OPERATION_FAILED;
       notifyError(message);
       throw error;
@@ -166,6 +186,24 @@ const ServiceSetup = () => {
     { header: "Service Name", accessor: "serviceName", width: "15%" },
     { header: "Service Type", accessor: "serviceType", width: "10%" },
     { header: "Description", accessor: "description", width: "20%" },
+    {
+      header: "Icon",
+      accessor: "iconUrl",
+      width: "6%",
+      align: "center",
+      render: (_value, row) =>
+        row.iconUrl ? (
+          <Center>
+            <Base64Icon base64={row.iconUrl} alt={`${row.serviceName} icon`} />
+          </Center>
+        ) : (
+          <Center>
+            <Tooltip label="No icon uploaded">
+              <IconPhoto size={20} color="gray" />
+            </Tooltip>
+          </Center>
+        ),
+    },
     {
       header: "Status",
       accessor: "status",

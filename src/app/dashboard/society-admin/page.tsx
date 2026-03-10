@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGreeting } from "@/hooks/useGreeting";
 import { Box, Grid, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import {
@@ -8,41 +8,14 @@ import {
   IconClipboardList, IconFileInvoice, IconGavel, IconHome,
   IconMessage, IconParking, IconShield, IconTool, IconUsers, IconWifi,
 } from "@tabler/icons-react";
-import { StatCards, MenuSection, UpcomingEvents,SocietyInfoDrawer } from "@/components";
-import { CORAL, CORAL_DARK, PEACH, softCard } from "@/utils/constants";
+import { StatCards, MenuSection, UpcomingEvents, SocietyInfoDrawer } from "@/components";
+import { COMMON_MESSAGE, CORAL, CORAL_DARK, PEACH, softCard } from "@/utils/constants";
+import { getRequest } from "@/service";
+import { API_PATH } from "@/utils/apiPath";
+import { SocietyItem } from "@/types/admin/societyManagement/newSociety/newSociety";
+import { notifications } from "@mantine/notifications";
 
-// ─── Society data (replace with API response later) ───────────────────────────
-
-const SOCIETY = {
-  societyId:          "d8158b52-2ba0-4f5f-a413-1e1d23b3f044",
-  societyName:        "Trident Galaxy x",
-  societyCode:        "TRI827",
-  registrationNumber: "827922",
-  societyType:        "VILLA",
-  societyLevel:       "HIGH",
-  establishmentYear:  1992,
-  totalArea:          "6727.00",
-  blocks: [
-    { blockName: "Q-Block", numberOfFloors: 5, totalFlats: 30, parkingSlots: 80, blockCode: "Q-BLOCK-d9xj"   },
-    { blockName: "Z-Block", numberOfFloors: 5, totalFlats: 40, parkingSlots: 60, blockCode: "Z-BLOCK-h3ii"   },
-    { blockName: "X-Block", numberOfFloors: 5, totalFlats: 20, parkingSlots: 40, blockCode: "X-BLOCKE-bfra"  },
-  ],
-  addressLine1:   "Patia, Bhubaneswar",
-  areaLocality:   "CRPsd",
-  city:           "Bhubaneswar",
-  districtCode:   "362",
-  stateCode:      "21",
-  pincode:        "436666",
-  landmark:       "Near Sai Temple",
-  adminName:      "Vikash Malik",
-  adminMobile:    "8338954292",
-  adminEmail:     "vikash@gmail.com",
-  packageId:      "1c61ec82-51df-465c-a6fc-c60fbb98ad97",
-  status:         1,
-  onboardingDate: "2026-03-03T06:09:09.368Z",
-};
-
-// ─── Other static data ────────────────────────────────────────────────────────
+// ─── Static data ──────────────────────────────────────────────────────────────
 
 const STATS = [
   { label: "Total Units",     value: "90",    sub: "across 3 blocks",  gradient: false },
@@ -52,20 +25,23 @@ const STATS = [
 ];
 
 const MENUS = [
-  { icon: IconHome,          label: "Units",        isAccess: false },
-  { icon: IconUsers,         label: "Residents",    isAccess: true  },
-  { icon: IconCash,          label: "Dues",         badge: "3"      },
-  { icon: IconFileInvoice,   label: "Invoices",     isAccess: true  },
-  { icon: IconChartBar,      label: "Reports",      isAccess: true  },
-  { icon: IconTool,          label: "Maintenance",  badge: "7"      },
-  { icon: IconCalendarEvent, label: "Events"                        },
-  { icon: IconClipboardList, label: "Notices"                       },
-  { icon: IconParking,       label: "Parking"                       },
-  { icon: IconGavel,         label: "Meetings"                      },
-  { icon: IconAffiliate,     label: "Committees"                    },
-  { icon: IconShield,        label: "By-laws"                       },
-  { icon: IconMessage,       label: "Messages",     badge: "12"     },
-  { icon: IconWifi,          label: "Notice Board"                  },
+  // ── Services ──────────────────────────────────────────────────────────────
+  { icon: IconHome,          label: "Units",        isAccess: false,                  section: "services" as const },
+  { icon: IconUsers,         label: "Residents",    isAccess: true,                   section: "services" as const },
+  { icon: IconCash,          label: "Dues",         badge: "3",                       section: "services" as const },
+  { icon: IconFileInvoice,   label: "Invoices",     isAccess: true,                   section: "services" as const },
+  { icon: IconChartBar,      label: "Reports",      isAccess: true,                   section: "services" as const },
+  { icon: IconTool,          label: "Maintenance",  badge: "7",                       section: "services" as const },
+  { icon: IconGavel,         label: "Meetings",                                       section: "services" as const },
+  { icon: IconAffiliate,     label: "Committees",                                     section: "services" as const },
+  { icon: IconShield,        label: "By-laws",                                        section: "services" as const },
+  { icon: IconMessage,       label: "Messages",     badge: "12",                      section: "services" as const },
+
+  // ── Amenities ─────────────────────────────────────────────────────────────
+  { icon: IconCalendarEvent, label: "Events",                                         section: "amenities" as const },
+  { icon: IconClipboardList, label: "Notices",                                        section: "amenities" as const },
+  { icon: IconParking,       label: "Parking",                                        section: "amenities" as const },
+  { icon: IconWifi,          label: "Notice Board",                                   section: "amenities" as const },
 ];
 
 const EVENTS = [
@@ -75,11 +51,36 @@ const EVENTS = [
   { label: "Committee Review", date: "22 Mar", tag: "Admin"       },
 ];
 
+const SOCIETY_ID = "d8158b52-2ba0-4f5f-a413-1e1d23b3f044"; // TODO: replace with dynamic ID
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 const SocietyAdminDashboard = () => {
   const greeting = useGreeting();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen]     = useState(false);
+  const [societyData, setSocietyData]   = useState<SocietyItem | null>(null);
+  const [loadingSociety, setLoadingSociety] = useState(false);
+
+  const notifyError = (message: string) =>
+    notifications.show({ title: "Error", message, color: "red" });
+
+  useEffect(() => {
+    fetchSocietyDetails();
+  }, []);
+
+  const fetchSocietyDetails = async () => {
+    setLoadingSociety(true);
+    try {
+      const response = await getRequest<{ data: SocietyItem }>(
+        `${API_PATH.GET_SOCITIES}/${SOCIETY_ID}`
+      );
+      setSocietyData(response?.data);
+    } catch (error) {
+      notifyError(COMMON_MESSAGE.SOCIETY_FETCH_FAIL);
+    } finally {
+      setLoadingSociety(false);
+    }
+  };
 
   return (
     <Box style={{ background: PEACH }} p="lg">
@@ -90,20 +91,30 @@ const SocietyAdminDashboard = () => {
           <Text fz="xs" fw={700} tt="uppercase" style={{ color: CORAL, letterSpacing: "0.08em" }}>
             {greeting} 👋
           </Text>
-          <UnstyledButton onClick={() => setDrawerOpen(true)}>
+          <UnstyledButton
+            onClick={() => setDrawerOpen(true)}
+            disabled={loadingSociety || !societyData}
+          >
             <Group gap={6} align="center">
               <Text
                 fz={{ base: 16, sm: 20 }}
                 fw={900}
                 c="#1a1a1a"
                 lh={1.2}
-                style={{ borderBottom: `2px dashed ${CORAL}`, transition: "color 0.15s ease" }}
+                style={{
+                  borderBottom: `2px dashed ${CORAL}`,
+                  transition: "color 0.15s ease",
+                  opacity: loadingSociety ? 0.5 : 1,
+                }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = CORAL)}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#1a1a1a")}
               >
-                {SOCIETY.societyName}
+                {/* Show name from API once loaded, fallback while loading */}
+                {societyData?.societyName ?? "Loading…"}
               </Text>
-              <Text fz="xs" fw={700} style={{ color: CORAL }} mt={2}>↗</Text>
+              {!loadingSociety && societyData && (
+                <Text fz="xs" fw={700} style={{ color: CORAL }} mt={2}>↗</Text>
+              )}
             </Group>
             <Text fz="xs" c="dimmed" fw={500} mt={2}>Society Admin Dashboard</Text>
           </UnstyledButton>
@@ -127,7 +138,7 @@ const SocietyAdminDashboard = () => {
             <MenuSection
               items={MENUS}
               title="Quick Actions"
-              onSeeAll={() => console.log("See all menus")}
+              previewLimit={5}
             />
           </Stack>
         </Grid.Col>
@@ -142,12 +153,14 @@ const SocietyAdminDashboard = () => {
 
       </Grid>
 
-      {/* ── Society Info Drawer ───────────────────────────────────────────── */}
-      <SocietyInfoDrawer
-        opened={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        data={SOCIETY}
-      />
+      {/* ── Society Info Drawer ───────────── */}
+      {societyData && (
+        <SocietyInfoDrawer
+          opened={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          data={societyData as any}
+        />
+      )}
 
     </Box>
   );

@@ -67,6 +67,12 @@ export default function HeroSection() {
                       radius="sm"
                       variant="gradient"
                       gradient={{ from: "#FF7853", to: "#FC2631", deg: 180 }}
+                      onClick={() => {
+                        const section = document.getElementById("contact");
+                        if (section) {
+                          section.scrollIntoView({ behavior: "smooth" });
+                        }
+                      }}
                     >
                       Get A Demo
                     </Button>

@@ -1,14 +1,28 @@
 "use client";
 
-import { Container, Grid, Stack, Box, Title, Button,Image } from "@mantine/core";
+import {
+  Container,
+  Grid,
+  Stack,
+  Box,
+  Title,
+  Button,
+  Image,
+  Transition,
+} from "@mantine/core";
 import ServiceItem from "../ui/ServiceItem";
 import { SERVICES, COLORS } from "../../constants";
 import { Carousel } from "@mantine/carousel";
-import {IMAGE} from "../../assets/utils/images";
-
-
+import { IMAGE } from "../../assets/utils/images";
+import { useIntersection } from "@mantine/hooks";
+import Autoplay from "embla-carousel-autoplay";
+import { useRef } from "react";
 
 export default function ServicesSection() {
+  const autoplay = useRef(Autoplay({ delay: 4000 }));
+  const { ref, entry } = useIntersection({
+    threshold: 0.3,
+  });
   return (
     <Box
       className="service"
@@ -19,82 +33,96 @@ export default function ServicesSection() {
     >
       <Container size="xl">
         <Grid gutter={60} align="center">
-          <Grid.Col span={{ base: 12, md: 6 }} className="serve-one">
-            <Stack gap="xl">
-              <Title
-                order={2}
-                size={32}
-                fw={600}
-                c="white"
-                className="serve-head"
-              >
-                WHO WE SERVE ?
-              </Title>
-              <Stack gap="md">
-                <Image
-                  src={IMAGE.ICON_SERVE_ONE}
-                  alt="iconServeOne"
-                  className="who-icon"
-                />
-                <Title className="who-title">High-End Societies</Title>
-                <Title className="who-p" textWrap="balance">
-                  Smart home integrations, concierge services, valet management,
-                  premium amenities, and luxury-grade UX.
-                </Title>
-              </Stack>
-              <Stack gap="md">
-                <Image
-                  src={IMAGE.ICON_SERVE_TWO}
-                  alt="iconServeTwo"
-                  className="who-icon"
-                />
-                <Title className="who-title">Mid-End Societies</Title>
-                <Title className="who-p" textWrap="balance">
-                  Maintenance billing, payments, announcements, polls, visitor
-                  management, and community engagement tools.
-                </Title>
-              </Stack>
-              <Stack gap="md">
-                <Image
-                  src={IMAGE.ICON_SERVE_THREE}
-                  alt="iconServeThree"
-                  className="who-icon"
-                />
-                <Title className="who-title">Low-End Societies</Title>
-                <Title className="who-p" textWrap="balance">
-                  Free communication, basic payments, digital notice board,
-                  simple complaint tracking, and visitor alerts.
-                </Title>
-              </Stack>
-              <Button
-                size="lg"
-                style={{ backgroundColor: COLORS.accent, width: "fit-content" }}
-                variant="gradient"
-                gradient={{ from: "#FF7853", to: "#FC2631", deg: 180 }}
-                className="who-btn"
-              >
-                View All Features
-              </Button>
-            </Stack>
+          <Grid.Col span={{ base: 12, md: 6 }} className="serve-one" ref={ref}>
+            <Transition
+              mounted={entry?.isIntersecting || false}
+              transition="slide-right"
+              duration={700}
+            >
+              {(styles) => (
+                <Stack gap="xl" style={styles}>
+                  <Title
+                    order={2}
+                    size={32}
+                    fw={600}
+                    c="white"
+                    className="serve-head"
+                  >
+                    WHO WE SERVE ?
+                  </Title>
+                  <Stack gap="md">
+                    <Image
+                      src={IMAGE.ICON_SERVE_ONE}
+                      alt="iconServeOne"
+                      className="who-icon"
+                    />
+                    <Title className="who-title">High-End Societies</Title>
+                    <Title className="who-p" textWrap="balance">
+                      Smart home integrations, concierge services, valet
+                      management, premium amenities, and luxury-grade UX.
+                    </Title>
+                  </Stack>
+                  <Stack gap="md">
+                    <Image
+                      src={IMAGE.ICON_SERVE_TWO}
+                      alt="iconServeTwo"
+                      className="who-icon"
+                    />
+                    <Title className="who-title">Mid-End Societies</Title>
+                    <Title className="who-p" textWrap="balance">
+                      Maintenance billing, payments, announcements, polls,
+                      visitor management, and community engagement tools.
+                    </Title>
+                  </Stack>
+                  <Stack gap="md">
+                    <Image
+                      src={IMAGE.ICON_SERVE_THREE}
+                      alt="iconServeThree"
+                      className="who-icon"
+                    />
+                    <Title className="who-title">Low-End Societies</Title>
+                    <Title className="who-p" textWrap="balance">
+                      Free communication, basic payments, digital notice board,
+                      simple complaint tracking, and visitor alerts.
+                    </Title>
+                  </Stack>
+                  <Button
+                    size="lg"
+                    style={{
+                      backgroundColor: COLORS.accent,
+                      width: "fit-content",
+                    }}
+                    variant="gradient"
+                    gradient={{ from: "#FF7853", to: "#FC2631", deg: 180 }}
+                    className="who-btn"
+                  >
+                    View All Features
+                  </Button>
+                </Stack>
+              )}
+            </Transition>
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 6 }} className="serve-two">
             <Carousel
               withIndicators
               height={600}
+              plugins={[autoplay.current]}
+              onMouseEnter={autoplay.current.stop}
+              onMouseLeave={autoplay.current.reset}
               emblaOptions={{
                 loop: true,
                 align: "start",
-                slidesToScroll: 3,
+                slidesToScroll: 1,
                 dragFree: false,
               }}
               styles={{
                 control: {
-                  backgroundColor: "red", 
-                  color: "white", 
+                  backgroundColor: "red",
+                  color: "white",
                 },
 
                 indicator: {
-                  backgroundColor: "red", 
+                  backgroundColor: "red",
                 },
               }}
             >

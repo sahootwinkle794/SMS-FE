@@ -227,7 +227,7 @@ export const COMMON_MESSAGE = {
   SOCIETY_ADDED: "Society created successfully",
   SOCIETY_CREATION_FAILED: "Failed to create society",
   SOCIETY_UPDATE: "Society updated successfully",
-  SOCIETY_FETCH: "Failed to fetch Society Details",
+  SOCIETY_FETCH_FAIL: "Failed to fetch Society Details",
   PACKAGE_TIER_MAPPING_FETCH_FAIL:
     "Failed to fetch package-tier mapping details",
   PACKAGE_TIER_MAPPING_SAVE_SUCCESS: "Package-tier mapping saved successfully",
@@ -272,6 +272,8 @@ export const PAGE_TITLE = {
   SERVICE_CATEGORY_MAPPING: "Service to Category Mapping",
   PACKAGE_SET_UP: "Package Set up",
   SERVICE_SET_UP: "Service Set up",
+  LEAD_MGT:"Lead Management",
+  DEMO_REQ:"Demo Requests"
 };
 export const FOOTER_TEXT =
   "Content Owned and Maintained by Prath Technologies Pvt. Ltd";

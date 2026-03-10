@@ -1,83 +1,125 @@
 import { useState } from "react";
 import {
-  Badge, Box, Card, Center, Group, ScrollArea,
+  Badge, Box, Card, Center, Group, Modal, ScrollArea,
   SimpleGrid, Stack, Text, UnstyledButton,
 } from "@mantine/core";
-import { IconChevronRight, IconLock } from "@tabler/icons-react";
-import { CORAL, CORAL_LIGHT, softCard } from "@/utils/constants";
+import { IconChevronRight, IconGridDots, IconLock } from "@tabler/icons-react";
+import { CORAL, CORAL_DARK, CORAL_LIGHT, PEACH, softCard } from "@/utils/constants";
 import { MenuItem } from "./MenuSection.types";
 import { CustomModal } from "@/components/CustomModal";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-// MenuItem lives in MenuSection.types.ts — add isAccess there:
-//
-//   export interface MenuItem {
-//     icon: Icon;
-//     label: string;
-//     badge?: string;
-//     isAccess?: boolean;  // undefined = true (fully accessible)
-//   }
 
 // ─── MenuSection ──────────────────────────────────────────────────────────────
 
 interface MenuSectionProps {
   items: MenuItem[];
   title?: string;
-  onSeeAll?: () => void;
+  /** Max items shown per section before "See All" is needed. Default: 7 */
+  previewLimit?: number;
 }
 
 export function MenuSection({
   items,
   title = "Quick Actions",
-  onSeeAll,
+  previewLimit = 7,
 }: MenuSectionProps) {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [allOpen,     setAllOpen]     = useState(false);
+
+  const amenities = items.filter((i) => i.section === "amenities");
+  const services  = items.filter((i) => i.section !== "amenities");
+
+  // Sliced previews
+  const servicesPreview  = services.slice(0, previewLimit);
+  const amenitiesPreview = amenities.slice(0, previewLimit);
+
+  // Whether any section has hidden items
+  const hasHidden =
+    services.length  > previewLimit ||
+    amenities.length > previewLimit;
+
+  // ── Shared grid renderer ────────────────────────────────────────────────────
+  const renderGrid = (list: MenuItem[], cols: object = { base: 4, sm: 5, md: 7 }) => (
+    <SimpleGrid cols={cols} spacing="md">
+      {list.map((item) => (
+        <MenuButton
+          key={item.label}
+          item={item}
+          onUpgradeClick={() => setUpgradeOpen(true)}
+        />
+      ))}
+    </SimpleGrid>
+  );
+
+  // ── Shared section block (divider + grid) ───────────────────────────────────
+  const renderSection = (
+    label: string,
+    list: MenuItem[],
+    cols?: object,
+  ) =>
+    list.length > 0 ? (
+      <Box>
+        <SectionDivider label={label} />
+        {renderGrid(list, cols)}
+      </Box>
+    ) : null;
 
   return (
     <>
+      {/* ── Preview card ─────────────────────────────────────────────────── */}
       <Card radius="xl" padding="lg" style={softCard}>
-        <Group justify="space-between" mb="md">
+
+        <Group justify="space-between" mb="lg">
           <Text fw={900} fz="md" c="#1a1a1a">{title}</Text>
-          {onSeeAll && (
-            <Group gap={2} style={{ cursor: "pointer" }} onClick={onSeeAll}>
+          {hasHidden && (
+            <Group
+              gap={4} style={{ cursor: "pointer" }}
+              onClick={() => setAllOpen(true)}
+            >
+              <IconGridDots size={14} color={CORAL} />
               <Text fz="sm" fw={700} c={CORAL}>See All</Text>
-              <IconChevronRight size={15} color={CORAL} />
+              <IconChevronRight size={14} color={CORAL} />
             </Group>
           )}
         </Group>
 
-        {/* Desktop: wrap grid */}
-        <Box visibleFrom="xs">
-          <SimpleGrid cols={{ base: 4, sm: 5, md: 7 }} spacing="md">
-            {items.map((item) => (
-              <MenuButton
-                key={item.label}
-                item={item}
-                onUpgradeClick={() => setUpgradeOpen(true)}
-              />
-            ))}
-          </SimpleGrid>
-        </Box>
+        <Stack gap="lg">
+          {renderSection("Services",  servicesPreview)}
+          {renderSection("Amenities", amenitiesPreview)}
+        </Stack>
 
-        {/* Mobile: horizontal scroll */}
-        <Box hiddenFrom="xs">
-          <ScrollArea scrollbarSize={0}>
-            <Group gap="sm" wrap="nowrap" pb={4}>
-              {items.map((item) => (
-                <MenuButton
-                  key={item.label}
-                  item={item}
-                  onUpgradeClick={() => setUpgradeOpen(true)}
-                />
-              ))}
-            </Group>
-          </ScrollArea>
-        </Box>
       </Card>
 
-      {/* ── Upgrade Modal ── */}
+      {/* ── Full "See All" modal ──────────────────────────────────────────── */}
+      <Modal
+        opened={allOpen}
+        onClose={() => setAllOpen(false)}
+        title={
+          <Group gap="sm">
+            <IconGridDots size={18} color={CORAL} />
+            <Text fw={900} fz="md" c="#1a1a1a">All {title}</Text>
+          </Group>
+        }
+        size="xl"
+        padding="xl"
+        centered
+        styles={{
+          header:  { background: '#ddd', borderBottom: "1.5px solid #FFE5E5" },
+          body:    { background: PEACH },
+          content: { borderRadius: 24 },
+          close: { color: "black" },
+        }}
+      >
+        <ScrollArea mah="70vh" scrollbarSize={4} offsetScrollbars>
+          <Stack gap="xl" pt="xs">
+            {renderSection("Services",  services,  { base: 4, sm: 6, md: 8 })}
+            {renderSection("Amenities", amenities, { base: 4, sm: 6, md: 8 })}
+          </Stack>
+        </ScrollArea>
+      </Modal>
+
+      {/* ── Upgrade Modal ────────────────────────────────────────────────── */}
       <CustomModal
-        icon = {<IconLock size={28} color={CORAL} stroke={1.8} />}
+        icon={<IconLock size={28} color={CORAL} stroke={1.8} />}
         opened={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
         title="Upgrade Your Plan"
@@ -94,6 +136,28 @@ export function MenuSection({
   );
 }
 
+// ─── SectionDivider ───────────────────────────────────────────────────────────
+
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <Group gap="sm" align="center" mb="md">
+      <Text
+        fz="11px" fw={800} tt="uppercase"
+        style={{ color: CORAL, letterSpacing: "0.08em", whiteSpace: "nowrap" }}
+      >
+        {label}
+      </Text>
+      <Box
+        style={{
+          flex: 1, height: 1.5,
+          background: "linear-gradient(to right, #FFD5D5, transparent)",
+          borderRadius: 99,
+        }}
+      />
+    </Group>
+  );
+}
+
 // ─── MenuButton ───────────────────────────────────────────────────────────────
 
 interface MenuButtonProps {
@@ -103,8 +167,6 @@ interface MenuButtonProps {
 
 function MenuButton({ item, onUpgradeClick }: MenuButtonProps) {
   const [hovered, setHovered] = useState(false);
-
-  // treat omitted isAccess as accessible
   const accessible = item.isAccess !== false;
 
   return (
@@ -116,37 +178,22 @@ function MenuButton({ item, onUpgradeClick }: MenuButtonProps) {
     >
       <Stack align="center" gap={6} style={{ position: "relative" }}>
 
-        {/* Notification badge — accessible items only */}
+        {/* Notification badge */}
         {accessible && item.badge && (
           <Badge
-            size="xs"
-            circle
-            variant="filled"
-            color="red"
-            style={{
-              position: "absolute",
-              top: -3,
-              right: "calc(50% - 34px)",
-              zIndex: 1,
-              fontSize: 9,
-            }}
+            size="xs" circle variant="filled" color="red"
+            style={{ position: "absolute", top: -3, right: "calc(50% - 34px)", zIndex: 1, fontSize: 9 }}
           >
             {item.badge}
           </Badge>
         )}
 
-        {/* Lock indicator — inaccessible items only */}
+        {/* Lock indicator */}
         {!accessible && (
           <Center
             style={{
-              position: "absolute",
-              top: -3,
-              right: "calc(50% - 34px)",
-              zIndex: 1,
-              width: 18,
-              height: 18,
-              borderRadius: "50%",
-              background: "#bbb",
+              position: "absolute", top: -3, right: "calc(50% - 34px)", zIndex: 1,
+              width: 18, height: 18, borderRadius: "50%", background: "#bbb",
             }}
           >
             <IconLock size={10} color="#fff" stroke={2.5} />
@@ -156,18 +203,14 @@ function MenuButton({ item, onUpgradeClick }: MenuButtonProps) {
         {/* Circle icon */}
         <Center
           style={{
-            width: 58,
-            height: 58,
-            borderRadius: "50%",
+            width: 58, height: 58, borderRadius: "50%",
             background: accessible
               ? `linear-gradient(145deg, ${CORAL} 0%, ${CORAL_LIGHT} 100%)`
               : "linear-gradient(145deg, #d0d0d0 0%, #e8e8e8 100%)",
             boxShadow: accessible
               ? hovered ? `0 10px 24px ${CORAL}66` : `0 6px 18px ${CORAL}44`
               : "0 4px 10px rgba(0,0,0,0.06)",
-            transform: accessible && hovered
-              ? "translateY(-4px) scale(1.07)"
-              : "translateY(0) scale(1)",
+            transform: accessible && hovered ? "translateY(-4px) scale(1.07)" : "translateY(0) scale(1)",
             opacity: accessible ? 1 : 0.55,
             transition: "transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease",
           }}
@@ -178,10 +221,7 @@ function MenuButton({ item, onUpgradeClick }: MenuButtonProps) {
         {/* Label */}
         <Text
           fz="10px" fw={800} lh={1.3} ta="center"
-          style={{
-            color: !accessible ? "#bbb" : hovered ? CORAL : "#555",
-            transition: "color 0.2s ease",
-          }}
+          style={{ color: !accessible ? "#bbb" : hovered ? CORAL : "#555", transition: "color 0.2s ease" }}
         >
           {item.label}
         </Text>

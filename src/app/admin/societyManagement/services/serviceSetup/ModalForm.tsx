@@ -2,11 +2,12 @@
 
 import {
   Modal, Grid, TextInput, Textarea, Button,
-  Group, Stack, NumberInput, Select, useMantineTheme,
+  Group, Stack, NumberInput, Select, useMantineTheme, Image, FileInput,
 } from "@mantine/core";
 import { useState, useEffect, useMemo } from "react";
 import { ServiceFormState } from "../../../../../types/admin/societyManagement/services/serviceSetup/serviceSetup";
 import { STATUS_OPTIONS, SERVICE_TYPE_OPTIONS, REGEX } from "@/utils/constants";
+import { IconPaperclip } from "@tabler/icons-react";
 
 interface ServiceSetupModalFormProps {
   opened: boolean;
@@ -49,18 +50,43 @@ const ServiceSetupModalForm = ({ opened, editing, onClose, onSubmit }: ServiceSe
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Full data URI for preview only — never sent to API
+  const [iconPreview, setIconPreview] = useState<string>("");
+
   const editingFormState = useMemo(() => editing ? { ...editing } : null, [editing]);
 
   useEffect(() => {
     if (opened) {
       setErrors({});
       setForm(editingFormState ?? EMPTY_FORM);
+      // Reconstruct preview from stored raw base64 when editing
+      setIconPreview(
+        editingFormState?.iconUrl
+          ? `data:image/svg+xml;base64,${editingFormState.iconUrl}`
+          : ""
+      );
     }
   }, [opened, editingFormState]);
 
   const handleInputChange = <K extends keyof ServiceFormState>(field: K, value: ServiceFormState[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
+  };
+
+  const handleFileChange = (file: File | null) => {
+    if (!file) {
+      handleInputChange("iconUrl", "");
+      setIconPreview("");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string; // e.g. "data:image/svg+xml;base64,PHN2Zy..."
+      setIconPreview(dataUrl);                 // full URI → preview, correct mime type preserved
+      const raw = dataUrl.slice(dataUrl.indexOf(",") + 1); // strip prefix → API payload
+      handleInputChange("iconUrl", raw);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async () => {
@@ -166,6 +192,47 @@ const ServiceSetupModalForm = ({ opened, editing, onClose, onSubmit }: ServiceSe
               disabled={isSubmitting}
               size="sm"
             />
+          </Grid.Col>
+
+          {/* Icon Upload */}
+          <Grid.Col span={12}>
+            <Group align="flex-end" gap="sm">
+              <FileInput
+                label="Service Icon"
+                placeholder="Choose Image (SVG file)"
+                accept="image/svg+xml"
+                leftSection={<IconPaperclip size={14} />}
+                onChange={handleFileChange}
+                disabled={isSubmitting}
+                clearable
+                size="sm"
+                style={{ flex: 1 }}
+              />
+              {iconPreview && (
+                <Image
+                  src={iconPreview}
+                  alt="Icon preview"
+                  w={36}
+                  h={36}
+                  fit="contain"
+                  mb={1}
+                  style={{
+                    border: `1px solid ${theme.colors.gray[3]}`,
+                    borderRadius: 6,
+                    backgroundColor: theme.colors.gray[0],
+                    padding: 3,
+                    flexShrink: 0,
+                  }}
+                  onError={(e) => {
+                    // If svg+xml fails (raster image), fall back to png
+                    const img = e.currentTarget;
+                    if (!img.src.includes("image/png")) {
+                      img.src = `data:image/png;base64,${form.iconUrl}`;
+                    }
+                  }}
+                />
+              )}
+            </Group>
           </Grid.Col>
         </Grid>
 

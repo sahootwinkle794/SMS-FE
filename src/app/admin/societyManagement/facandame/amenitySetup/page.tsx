@@ -9,6 +9,8 @@ import {
   Tooltip,
   ActionIcon,
   Affix,
+  Image,
+  Center,
 } from "@mantine/core";
 import AmenitySetupModalForm from "./ModalForm";
 import { DataTable, Column } from "@/components/DataTable";
@@ -28,7 +30,7 @@ import {
   IconEdit,
   IconTrash,
   IconX,
-  IconDotsVertical,
+  IconPhoto,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { IMAGES } from "@/utils/images";
@@ -103,11 +105,11 @@ const AmenitySetup = () => {
       if (editing) {
         await patchRequest(
           `${API_PATH.UPDATE_AMENITY}/${editing.amenityId}`,
-          formData, // Use formData from modal instead of parent's form state
+          formData,
         );
         notifySuccess(COMMON_MESSAGE.AMENITY_UPDATE);
       } else {
-        await postRequest(API_PATH.POST_AMENITY, formData); // Use formData from modal
+        await postRequest(API_PATH.POST_AMENITY, formData);
         notifySuccess(COMMON_MESSAGE.AMENITY_ADDED);
       }
 
@@ -226,11 +228,31 @@ const AmenitySetup = () => {
       accessor: "description",
       width: "20%",
     },
-    // {
-    //   header: "Icon Url",
-    //   accessor: "iconUrl",
-    //   width: "6%",
-    // },
+    {
+      header: "Icon",
+      accessor: "iconUrl",
+      width: "6%",
+      align: "center",
+      render: (_value, row) =>
+        row.iconUrl ? (
+          <Center>
+            <Image
+              src={`data:image/svg+xml;base64,${row.iconUrl}`}
+              alt={`${row.amenityName} icon`}
+              w={32}
+              h={32}
+              fit="contain"
+              style={{ borderRadius: 4 }}
+            />
+          </Center>
+        ) : (
+          <Center>
+            <Tooltip label="No icon uploaded">
+              <IconPhoto size={20} color="gray" />
+            </Tooltip>
+          </Center>
+        ),
+    },
     {
       header: "Status",
       width: "6%",

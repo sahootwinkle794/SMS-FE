@@ -8,6 +8,8 @@ import {
   Button,
   Group,
   Stack,
+  Image,
+  FileInput,
 } from "@mantine/core";
 import { useState, useEffect, useMemo } from "react";
 import {
@@ -15,6 +17,7 @@ import {
   FormState,
 } from "@/types/admin/societyManagement/amenitySetup/amenitySetup";
 import { useMantineTheme } from "@mantine/core";
+import { IconPaperclip } from "@tabler/icons-react";
 
 interface AmenitySetupModalFormProps {
   opened: boolean;
@@ -30,6 +33,7 @@ const AmenitySetupModalForm = ({
   onSubmit,
 }: AmenitySetupModalFormProps) => {
   const theme = useMantineTheme();
+
   const [form, setForm] = useState<FormState>({
     amenityCode: "",
     amenityName: "",
@@ -39,12 +43,12 @@ const AmenitySetupModalForm = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState({
-    amenityCode: "",
-    amenityName: "",
-  });
+  const [errors, setErrors] = useState({ amenityCode: "", amenityName: "" });
 
-  // Get form state from editing data
+  // iconPreview holds the full data URI (e.g. "data:image/svg+xml;base64,...")
+  // used only for <img> — the raw base64 (without prefix) is sent to the API
+  const [iconPreview, setIconPreview] = useState<string>("");
+
   const editingFormState = useMemo(() => {
     if (!editing) return null;
     return {
@@ -56,11 +60,15 @@ const AmenitySetupModalForm = ({
     };
   }, [editing]);
 
-  // Reset form when modal opens
   useEffect(() => {
     if (opened) {
       if (editingFormState) {
         setForm(editingFormState);
+        setIconPreview(
+          editingFormState.iconUrl
+            ? `data:image/svg+xml;base64,${editingFormState.iconUrl}`
+            : ""
+        );
       } else {
         setForm({
           amenityCode: "",
@@ -69,51 +77,49 @@ const AmenitySetupModalForm = ({
           iconUrl: "",
           status: 1,
         });
+        setIconPreview("");
       }
-      setErrors({
-        amenityCode: "",
-        amenityName: "",
-      });
+      setErrors({ amenityCode: "", amenityName: "" });
     }
   }, [opened, editingFormState]);
 
-  const handleSubmit = async () => {
-    const newErrors = {
-      amenityCode: "",
-      amenityName: "",
+  const handleFileChange = (file: File | null) => {
+    if (!file) {
+      handleInputChange("iconUrl", "");
+      setIconPreview("");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string; // e.g. "data:image/svg+xml;base64,PHN2Zy..."
+      setIconPreview(dataUrl);                 // full URI → <img src>, correct mime type
+      const raw = dataUrl.slice(dataUrl.indexOf(",") + 1); // strip prefix → API payload
+      handleInputChange("iconUrl", raw);
     };
+    reader.readAsDataURL(file);
+  };
 
-    if (!form.amenityCode.trim()) {
-      newErrors.amenityCode = "Amenity Code is required";
-    }
-
-    if (!form.amenityName.trim()) {
-      newErrors.amenityName = "Amenity Name is required";
-    }
-
+  const handleSubmit = async () => {
+    const newErrors = { amenityCode: "", amenityName: "" };
+    if (!form.amenityCode.trim()) newErrors.amenityCode = "Amenity Code is required";
+    if (!form.amenityName.trim()) newErrors.amenityName = "Amenity Name is required";
     setErrors(newErrors);
+    if (newErrors.amenityCode || newErrors.amenityName) return;
 
-    if (newErrors.amenityCode || newErrors.amenityName) {
-      return; // stop submit
-    }
     setIsSubmitting(true);
-
     try {
-      const { ...payload } = form;
-
-      await onSubmit(payload);
+      await onSubmit(form); // form.iconUrl is already raw base64
     } catch (error) {
       console.log("Error submitting form:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
+
   const handleInputChange = (field: string, value: unknown) => {
     setForm((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({
-      ...prev,
-      [field]: "",
-    }));
+    setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   return (
@@ -129,20 +135,14 @@ const AmenitySetupModalForm = ({
           padding: "16px 20px",
           margin: "-1px -1px 16px -1px",
         },
-        title: {
-          color: "white",
-          fontWeight: 600,
-        },
+        title: { color: "white", fontWeight: 600 },
         close: {
           color: "white",
-          "&:hover": {
-            backgroundColor: "rgba(255, 255, 255, 0.7)",
-          },
+          "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.7)" },
         },
       }}
     >
       <Stack gap="md">
-        {/* Basic Information Section */}
         <Grid>
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <TextInput
@@ -183,17 +183,39 @@ const AmenitySetupModalForm = ({
             />
           </Grid.Col>
 
-          {/* <Grid.Col span={{ base: 12, sm: 6 }}>
-            <TextInput
-              label="Icon Url"
-              value={form.iconUrl}
-              onChange={(e) => handleInputChange("iconUrl", e.target.value)}
-              min={1}
-              disabled={isSubmitting}
-              placeholder="Enter amenity icon url"
-              size="sm"
-            />
-          </Grid.Col> */}
+          {/* Icon Upload */}
+          <Grid.Col span={12}>
+            <Group align="flex-end" gap="sm">
+              <FileInput
+                label="Amenity Icon"
+                placeholder="Choose an svg icon file"
+                accept="image/svg+xml"
+                leftSection={<IconPaperclip size={14} />}
+                onChange={handleFileChange}
+                disabled={isSubmitting}
+                clearable
+                size="sm"
+                style={{ flex: 1 }}
+              />
+              {iconPreview && (
+                <Image
+                  src={iconPreview}
+                  alt="Icon preview"
+                  w={36}
+                  h={36}
+                  fit="contain"
+                  mb={1}
+                  style={{
+                    border: `1px solid ${theme.colors.gray[3]}`,
+                    borderRadius: 6,
+                    backgroundColor: theme.colors.gray[0],
+                    padding: 3,
+                    flexShrink: 0,
+                  }}
+                />
+              )}
+            </Group>
+          </Grid.Col>
 
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <Switch
@@ -210,16 +232,12 @@ const AmenitySetupModalForm = ({
           </Grid.Col>
         </Grid>
 
-        {/* Action Buttons */}
         <Group justify="flex-end" mt="md">
           <Button
             variant="outline"
             color="primary.5"
             onClick={() => {
-              setErrors({
-                amenityCode: "",
-                amenityName: "",
-              });
+              setErrors({ amenityCode: "", amenityName: "" });
               onClose();
             }}
             disabled={isSubmitting}
