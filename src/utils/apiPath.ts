@@ -2,7 +2,7 @@ const getServerUrl = () => process.env.NEXT_PUBLIC_API_URL1 ?? "";
 const NEXT_PUBLIC_API_URL1 = process.env.NEXT_PUBLIC_API_URL1;
 const NEXT_PUBLIC_API_URL2 = process.env.NEXT_PUBLIC_API_URL2;
 const NEXT_PUBLIC_API_URL3 = process.env.NEXT_PUBLIC_API_URL3;
-const NEXT_PUBLIC_API_URL4=process.env.NEXT_PUBLIC_API_URL4;
+const NEXT_PUBLIC_API_URL4 = process.env.NEXT_PUBLIC_API_URL4;
 export const API_PATH = {
   // Server-side routes (called from route.ts) - use getter
   get VERIFY_OTP() {
@@ -30,6 +30,7 @@ export const API_PATH = {
   UPDATE_AMENITY: `${NEXT_PUBLIC_API_URL2}/amenities`,
   DELETE_AMENITY: `${NEXT_PUBLIC_API_URL2}/amenities`,
   GET_SERVICE_MASTER: `${NEXT_PUBLIC_API_URL2}/services-master`,
+  GET_SERVICE_MASTER_DROPDOWN: `${NEXT_PUBLIC_API_URL2}/services-master/dropdown`,
   CATEGORY_SERVICE_MAP: `${NEXT_PUBLIC_API_URL2}/category-service-map`,
   PACKAGE_MAPPING_LIST: `${NEXT_PUBLIC_API_URL2}/package-mappings/list`,
   PACKAGE_MAPPINGS: `${NEXT_PUBLIC_API_URL2}/package-mappings`,
@@ -43,7 +44,7 @@ export const API_PATH = {
   CATEGORY_AMENITY_MAPPING: `${NEXT_PUBLIC_API_URL3}/category-amenity-map`,
   PACKAGE_TIER_MAPPING: `${NEXT_PUBLIC_API_URL3}/package-tier-map`,
 
-
   // SOCIETY CONTENT SERVICE
-  POST_GUEST_USER_PUBLIC:`${NEXT_PUBLIC_API_URL4}/guest-users/public`
+  POST_GUEST_USER_PUBLIC: `${NEXT_PUBLIC_API_URL4}/guest-users/book-demo`,
+  GET_GUEST_USER: `${NEXT_PUBLIC_API_URL4}/guest-users`,
 };

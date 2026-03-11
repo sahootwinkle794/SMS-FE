@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 import { useGreeting } from "@/hooks/useGreeting";
 import { Box, Grid, Group, Stack, Text, UnstyledButton } from "@mantine/core";
-import {
-  IconAffiliate, IconCalendarEvent, IconCash, IconChartBar,
-  IconClipboardList, IconFileInvoice, IconGavel, IconHome,
-  IconMessage, IconParking, IconShield, IconTool, IconUsers, IconWifi,
+import {IconBellRinging, IconBike, IconBookmarkPlus, IconBooks, IconBuildingCommunity, IconCalendarEvent, IconCash,
+  IconClipboardList,IconCoffee,IconDeviceCctv,IconFileInvoice,IconGavel, IconGymnastics, IconHome, IconPackage, IconParking,IconPlayFootball,IconSchool,IconShieldCheck,IconSwimming,IconTool, IconTrees, IconTruckDelivery, IconUserCheck, IconUsers, IconWifi,
 } from "@tabler/icons-react";
 import { StatCards, MenuSection, UpcomingEvents, SocietyInfoDrawer } from "@/components";
 import { COMMON_MESSAGE, CORAL, CORAL_DARK, PEACH, softCard } from "@/utils/constants";
@@ -26,32 +24,47 @@ const STATS = [
 
 const MENUS = [
   // ── Services ──────────────────────────────────────────────────────────────
-  { icon: IconHome,          label: "Units",        isAccess: false,                  section: "services" as const },
-  { icon: IconUsers,         label: "Residents",    isAccess: true,                   section: "services" as const },
-  { icon: IconCash,          label: "Dues",         badge: "3",                       section: "services" as const },
-  { icon: IconFileInvoice,   label: "Invoices",     isAccess: true,                   section: "services" as const },
-  { icon: IconChartBar,      label: "Reports",      isAccess: true,                   section: "services" as const },
-  { icon: IconTool,          label: "Maintenance",  badge: "7",                       section: "services" as const },
-  { icon: IconGavel,         label: "Meetings",                                       section: "services" as const },
-  { icon: IconAffiliate,     label: "Committees",                                     section: "services" as const },
-  { icon: IconShield,        label: "By-laws",                                        section: "services" as const },
-  { icon: IconMessage,       label: "Messages",     badge: "12",                      section: "services" as const },
+  { icon: IconHome,          label: "Visitor Management", section: "services" as const },
+  { icon: IconUsers,         label: "Resident Management", isAccess: true, section: "services" as const },
+  { icon: IconCash,          label: "Dues", isAccess: false, section: "services" as const },
+  { icon: IconParking,       label: "Parking Slot Allocation", section: "services" as const },
+  { icon: IconGavel,         label: "Complaint / Ticket Management", section: "services" as const },
+  { icon: IconTool,          label: "Maintenance Bill Generation", section: "services" as const },
+  { icon: IconBookmarkPlus,  label: "Guest Room Booking", section: "services" as const },
+  { icon: IconPackage,       label: "Parcel / Delivery Management", section: "services" as const },
+  { icon: IconShieldCheck,   label: "Security Management", section: "services" as const },
+  { icon: IconTruckDelivery, label: "Vendor / Service Entry", section: "services" as const },
+  { icon: IconUserCheck,     label: "Staff Management", section: "services" as const },
+  { icon: IconFileInvoice,   label: "Invoice & Receipts", section: "services" as const },
+  { icon: IconDeviceCctv,    label: "Security Logs", section: "services" as const },
+  { icon: IconBellRinging,   label: "Emergency Alerts", section: "services" as const },
 
   // ── Amenities ─────────────────────────────────────────────────────────────
-  { icon: IconCalendarEvent, label: "Events",                                         section: "amenities" as const },
-  { icon: IconClipboardList, label: "Notices",                                        section: "amenities" as const },
-  { icon: IconParking,       label: "Parking",                                        section: "amenities" as const },
-  { icon: IconWifi,          label: "Notice Board",                                   section: "amenities" as const },
+  { icon: IconCalendarEvent, label: "Events", section: "amenities" as const },
+  { icon: IconClipboardList, label: "Notices", section: "amenities" as const },
+  { icon: IconParking,       label: "Parking", section: "amenities" as const },
+  { icon: IconWifi,          label: "Notice Board", section: "amenities" as const },
+  { icon: IconDeviceCctv,    label: "CCTV Surveillance", section: "amenities" as const },
+  { icon: IconBuildingCommunity, label: "Community Hall", isAccess: false, section: "amenities" as const },
+  { icon: IconGymnastics,    label: "Gym / Fitness Center", section: "amenities" as const },
+  { icon: IconSwimming,      label: "Swimming Pool", section: "amenities" as const },
+  { icon: IconPlayFootball,  label: "Sports Ground", section: "amenities" as const },
+  { icon: IconBike,          label: "Cycling Track", section: "amenities" as const },
+  { icon: IconTrees,         label: "Garden / Park", section: "amenities" as const },
+  { icon: IconCoffee,        label: "Cafeteria", section: "amenities" as const },
+  { icon: IconSchool,        label: "Kids Play Area", section: "amenities" as const },
+  { icon: IconBooks,         label: "Library", section: "amenities" as const },
 ];
 
 const EVENTS = [
-  { label: "Holi Celebration", date: "14 Mar", tag: "Festival"   },
-  { label: "AGM Meeting",      date: "15 Mar", tag: "Governance"  },
-  { label: "Maintenance Day",  date: "18 Mar", tag: "Ops"         },
-  { label: "Committee Review", date: "22 Mar", tag: "Admin"       },
+  { label: "Holi Celebration", date: "14 Mar 2026", tag: "Festival"   },
+  { label: "AGM Meeting",      date: "15 Mar 2026", tag: "Governance"  },
+  { label: "Maintenance Day",  date: "18 Mar 2026", tag: "Ops"         },
+  { label: "Committee Review", date: "22 Mar 2026", tag: "Admin"       },
+  { label: "Society Meeting", date: "24 Mar 2026", tag: "Admin"       },
 ];
 
-const SOCIETY_ID = "d8158b52-2ba0-4f5f-a413-1e1d23b3f044"; // TODO: replace with dynamic ID
+const SOCIETY_ID = "727f429a-ce9b-47c0-bc07-3f43d9a5f8b9"; // TODO: replace with dynamic ID
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
@@ -116,16 +129,11 @@ const SocietyAdminDashboard = () => {
                 <Text fz="xs" fw={700} style={{ color: CORAL }} mt={2}>↗</Text>
               )}
             </Group>
-            <Text fz="xs" c="dimmed" fw={500} mt={2}>Society Admin Dashboard</Text>
           </UnstyledButton>
         </Box>
 
         <Box style={{ ...softCard, borderRadius: 999, padding: "6px 18px" }}>
-          <Text fz="xs" fw={800} style={{ color: CORAL_DARK }}>
-            📅 {new Date().toLocaleDateString("en-IN", {
-              day: "numeric", month: "short", year: "numeric",
-            })}
-          </Text>
+          <Text fz="xs" c="dimmed" fw={500} mt={2}>Society Admin Dashboard</Text>
         </Box>
       </Group>
 
@@ -138,7 +146,7 @@ const SocietyAdminDashboard = () => {
             <MenuSection
               items={MENUS}
               title="Quick Actions"
-              previewLimit={5}
+              previewLimit={7}
             />
           </Stack>
         </Grid.Col>
@@ -147,7 +155,7 @@ const SocietyAdminDashboard = () => {
           <UpcomingEvents
             items={EVENTS}
             title="Upcoming Events"
-            onSeeAll={() => console.log("See all events")}
+            // onSeeAll={() => console.log("See all events")}
           />
         </Grid.Col>
 

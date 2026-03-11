@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppBreadcrumbs, AccessRestricted } from "@/components";
 import {
     Box,
@@ -16,37 +16,27 @@ import {
     Button,
     Textarea,
     useMantineTheme,
+    Affix,
 } from "@mantine/core";
 import { DatePickerInput, TimeInput } from "@mantine/dates";
-import { IconCheck, IconRestore, IconX, } from "@tabler/icons-react";
+import { IconCheck, IconEyePlus, IconRestore, IconX, } from "@tabler/icons-react";
 import { Column, DataTable } from "@/components/DataTable";
-import { RECORDS_PER_PAGE, PageTitles } from "@/utils/constants";
+import { RECORDS_PER_PAGE, PageTitles, COMMON_MESSAGE, REQUEST_STATUS_UI, REQUEST_STATUS, RequestStatus } from "@/utils/constants";
 import { useMenuPermissions } from "@/hooks/useMenuPermissions";
 import { usePathname } from "next/navigation";
 import moment from "moment";
+import { getRequest, postRequest } from "@/service";
+import { API_PATH } from "@/utils/apiPath";
+import { notifications } from "@mantine/notifications";
+import { ScheduleForm, ApiError, GuestUser, GuestUserResponse ,DemoRequestFormState} from "@/types/admin/leadManagement/demoRequests/demoRequests";
+import DemoRequestModalForm from "./ModalForm";
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-/* ================= TYPES ================= */
+const notifyError = (message: string) =>
+    notifications.show({ title: "Error", message, color: "red" });
 
-type RequestStatus = "pending" | "scheduled" | "rejected";
-
-type DemoRequest = {
-    id: string;
-    name: string;
-    mobile: string;
-    email: string;
-    city: string;
-    description: string;
-    createdAt: string;
-    status?: RequestStatus;
-};
-
-type ScheduleForm = {
-    target: DemoRequest | null;
-    date: string | null;
-    time: string;
-    note: string;
-};
-
+const notifySuccess = (message: string) =>
+    notifications.show({ title: "Successful!", message, color: "green" });
 /* ================= CONSTANTS ================= */
 
 const SCHEDULE_INITIAL: ScheduleForm = {
@@ -55,42 +45,6 @@ const SCHEDULE_INITIAL: ScheduleForm = {
     time: "",
     note: "",
 };
-
-
-/* ================= DUMMY DATA ================= */
-
-const dummyDemoRequests: DemoRequest[] = [
-    {
-        id: "1",
-        name: "Rahul Sharma",
-        mobile: "9876543210",
-        email: "rahul.sharma@gmail.com",
-        city: "Delhi",
-        description: "Need a demo for society management system.",
-        createdAt: "2026-03-08T10:30:00",
-        status: "pending",
-    },
-    {
-        id: "2",
-        name: "Priya Das",
-        mobile: "9123456780",
-        email: "priya.das@gmail.com",
-        city: "Bhubaneswar",
-        description: "Interested in features and pricing demo.",
-        createdAt: "2026-03-08T12:15:00",
-        status: "pending",
-    },
-    {
-        id: "3",
-        name: "Amit Verma",
-        mobile: "9988776655",
-        email: "amit.verma@gmail.com",
-        city: "Mumbai",
-        description: "Looking for demo for apartment management.",
-        createdAt: "2026-03-09T09:45:00",
-        status: "pending",
-    },
-];
 
 /* ================= HELPERS ================= */
 
@@ -103,15 +57,12 @@ const truncate = (text: string, maxLength = 50) =>
 /* ================= STATUS BADGE ================= */
 
 const StatusBadge = ({ status }: { status: RequestStatus }) => {
-    const map: Record<RequestStatus, { color: string; label: string }> = {
-        pending: { color: "yellow", label: "Pending" },
-        scheduled: { color: "blue", label: "Scheduled" },
-        rejected: { color: "red", label: "Rejected" },
-    };
-    const { color, label } = map[status];
+    const config =
+        REQUEST_STATUS_UI[status] ?? REQUEST_STATUS_UI[REQUEST_STATUS.PENDING];
+
     return (
-        <Badge size="sm" color={color} variant="light" radius="sm">
-            {label}
+        <Badge size="sm" color={config.color} variant="light" radius="sm">
+            {config.label}
         </Badge>
     );
 };
@@ -119,15 +70,16 @@ const StatusBadge = ({ status }: { status: RequestStatus }) => {
 /* ================= COMPONENT ================= */
 
 const DemoRequests = () => {
-    const [currentPage, setCurrentPage] = useState(1);
-    const { canRead } = useMenuPermissions();
 
+    const { canRead } = useMenuPermissions();
     const pathname = usePathname();
+    const theme = useMantineTheme();
     const pageTitle = PageTitles[pathname] ?? "this page";
 
-    const [requests, setRequests] = useState<DemoRequest[]>(dummyDemoRequests);
-
-    const theme = useMantineTheme();
+    const [requests, setRequests] = useState<GuestUser[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [opened, setOpened] = useState(false);
+     const [totalRecords, setTotalRecords] = useState(0);
     /* ================= SCHEDULE MODAL STATE (optimized) ================= */
 
     const [scheduleForm, setScheduleForm] = useState<ScheduleForm>(SCHEDULE_INITIAL);
@@ -140,10 +92,13 @@ const DemoRequests = () => {
     /* ================= SORT: New first → descending date ================= */
 
     const sortedRequests = [...requests].sort((a, b) => {
-        const aIsNew = isNew(a.createdAt) ? 1 : 0;
-        const bIsNew = isNew(b.createdAt) ? 1 : 0;
-        if (bIsNew !== aIsNew) return bIsNew - aIsNew;
-        return moment(b.createdAt).valueOf() - moment(a.createdAt).valueOf();
+        const aTime = new Date(a.createdAt).getTime();
+        const bTime = new Date(b.createdAt).getTime();
+
+        const aIsNew = Number(isNew(a.createdAt));
+        const bIsNew = Number(isNew(b.createdAt));
+
+        return bIsNew !== aIsNew ? bIsNew - aIsNew : bTime - aTime;
     });
 
     const newCount = sortedRequests.filter((r) => isNew(r.createdAt)).length;
@@ -152,28 +107,66 @@ const DemoRequests = () => {
 
     const handleScheduleConfirm = () => {
         if (!scheduleForm.target) return;
+
         setRequests((prev) =>
             prev.map((r) =>
-                r.id === scheduleForm.target!.id
-                    ? { ...r, status: "scheduled" }
+                r.guest_Id === scheduleForm.target!.guest_Id
+                    ? { ...r, status: 2 }
                     : r
             )
         );
+
         setScheduleForm(SCHEDULE_INITIAL);
     };
 
     const handleReject = (id: string) => {
         setRequests((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, status: "rejected" } : r))
+            prev.map((r) =>
+                r.guest_Id === id ? { ...r, status: 3 } : r
+            )
         );
     };
 
+    /* ================= DATA FETCH (EFFECT) ================= */
+    const fetchDemoRequestData = useCallback(async () => {
+        try {
+            const payload = {
+                search: "",
+                page: currentPage,
+                limit: RECORDS_PER_PAGE,
+                sortBy: "created_at",
+                sortOrder: "DESC",
+            };
+
+            const response = await getRequest<GuestUserResponse>(
+                API_PATH.GET_GUEST_USER,
+                payload,
+            );
+
+            setRequests(response?.data?.data)
+            setTotalRecords(response?.data?.total ?? 0);
+        } catch (err) {
+            console.error(err);
+            const error = err as ApiError;
+            notifyError(error?.response?.data?.message || COMMON_MESSAGE.SOCIETY_FETCH_FAIL);
+        }
+    }, [currentPage]);
+
+
+    /* =================  Fetch users  ================= */
+    useEffect(() => {
+        const fetchData = async () => {
+            await fetchDemoRequestData();
+        };
+        fetchData();
+    }, [fetchDemoRequestData]);
+
     /* ================= COLUMNS ================= */
 
-    const columns: Column<DemoRequest>[] = [
+    const columns: Column<GuestUser>[] = [
         {
             header: "Sl No",
-            accessor: "id",
+            accessor: "guest_Id",
             align: "center",
             render: (_value, _row, index) => (
                 <Text size="sm" c="dimmed">
@@ -183,7 +176,7 @@ const DemoRequests = () => {
         },
         {
             header: "Name",
-            accessor: "name",
+            accessor: "full_Name",
             align: "left",
             render: (value, row) => (
                 <Group gap="xs">
@@ -200,7 +193,7 @@ const DemoRequests = () => {
         },
         {
             header: "Mobile",
-            accessor: "mobile",
+            accessor: "mobile_No",
             align: "left",
         },
         {
@@ -220,11 +213,11 @@ const DemoRequests = () => {
         },
         {
             header: "Description",
-            accessor: "description",
+            accessor: "projectDescription",
             align: "left",
             render: (value) => {
                 const text = value as string;
-                return text.length > 50 ? (
+                return text?.length > 50 ? (
                     <Tooltip label={text} multiline w={280} withArrow>
                         <Text size="sm" c="dimmed" style={{ cursor: "default" }}>
                             {truncate(text)}
@@ -255,18 +248,23 @@ const DemoRequests = () => {
             accessor: "status",
             align: "center",
             render: (value) => (
-                <StatusBadge status={(value as RequestStatus) ?? "pending"} />
+                <StatusBadge status={value as RequestStatus} />
             ),
         },
         {
             header: "Action",
-            accessor: "id",
+            accessor: "guest_Id",
             align: "center",
             render: (_value, row) => {
-                const isPending = (row.status ?? "pending") === "pending";
+
+                const isPending = row.status === REQUEST_STATUS.PENDING;
 
                 if (!isPending) {
-                    return <Text size="xs" c="dimmed">—</Text>;
+                    return (
+                        <Text size="xs" c="dimmed">
+                            —
+                        </Text>
+                    );
                 }
 
                 return (
@@ -289,7 +287,7 @@ const DemoRequests = () => {
                                 radius="xl"
                                 variant="light"
                                 color="red"
-                                onClick={() => handleReject(row.id)}
+                                onClick={() => handleReject(row.guest_Id)}
                             >
                                 <IconX size={14} />
                             </ActionIcon>
@@ -297,12 +295,31 @@ const DemoRequests = () => {
                     </Group>
                 );
             },
-        },
+        }
     ];
 
     if (!canRead) {
         return <AccessRestricted pageTitle={pageTitle} />;
     }
+
+    const handleSubmit = async (data: DemoRequestFormState) => {
+        try {
+            await postRequest(API_PATH.POST_GUEST_USER_PUBLIC, data);
+
+            notifySuccess("Demo request created successfully");
+
+            setOpened(false);
+            fetchDemoRequestData();
+        } catch (err: unknown) {
+            console.error(err);
+
+            const error = err as ApiError;
+
+            notifyError(
+                error?.response?.data?.message || "Failed to create demo request"
+            );
+        }
+    };
 
     return (
         <Box>
@@ -317,13 +334,13 @@ const DemoRequests = () => {
             </Container>
 
             {/* TABLE */}
-            <DataTable<DemoRequest>
-                data={sortedRequests}
+            <DataTable<GuestUser>
+                data={requests}
                 columns={columns}
                 pageSize={RECORDS_PER_PAGE}
                 currentPage={currentPage}
                 onPageChange={setCurrentPage}
-                totalRecords={sortedRequests.length}
+                totalRecords={totalRecords}
             />
 
             {/* ===== SCHEDULE DEMO MODAL ===== */}
@@ -332,7 +349,7 @@ const DemoRequests = () => {
                 onClose={() => setScheduleForm(SCHEDULE_INITIAL)}
                 title={
                     <Text fw={600} size="md">
-                        Schedule Demo — {scheduleForm.target?.name}
+                        Schedule Demo — {scheduleForm.target?.full_Name}
                     </Text>
                 }
                 styles={{
@@ -387,6 +404,32 @@ const DemoRequests = () => {
                     </Group>
                 </Stack>
             </Modal>
+
+            <Affix position={{ bottom: 40, right: 20 }}>
+                <Button
+                    leftSection={<IconEyePlus size={20} />}
+                    radius="xl"
+                    size="md"
+                    color="primary.5"
+                    onClick={() => setOpened(true)}
+                    style={{
+                        position: "fixed",
+                        bottom: 32,
+                        right: 32,
+                        zIndex: 100,
+                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+                    }}
+                >
+                    Add Demo Requests
+                </Button>
+            </Affix>
+
+            <DemoRequestModalForm
+                opened={opened}
+                editing={null}
+                onClose={() => setOpened(false)}
+                onSubmit={handleSubmit}
+            />
         </Box>
     );
 };

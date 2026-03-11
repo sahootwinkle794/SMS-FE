@@ -74,40 +74,10 @@ const ServiceCategoryMapping = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingCategory, setEditingCategory] =
     useState<CategoryServiceMapping | null>(null);
+    const [allServices, setAllServices] = useState<ServiceItem[]>([]);
   const [removedSevices, setRemovedServices] = useState<Array<{ serviceId: string; displayOrder: number; status: number }>>([]);
 
-  // const SERVICE_FORM_FIELDS = [
-  //   {
-  //     name: "category",
-  //     label: "Service Category",
-  //     type: "select",
-  //     required: true,
-  //     options: SERVICES_CATEGORIES.map((c) => ({
-  //       value: c.title,
-  //       label: c.title,
-  //     })),
-  //   },
-  //   {
-  //     name: "serviceName",
-  //     label: "Service Name",
-  //     type: "text",
-  //     required: true,
-  //     placeholder: "e.g. CCTV Monitoring",
-  //   },
-  //   {
-  //     name: "description",
-  //     label: "Service Description",
-  //     type: "textarea",
-  //     placeholder: "Optional description",
-  //   },
-  //   {
-  //     name: "status",
-  //     label: "Status",
-  //     type: "select",
-  //     required: true,
-  //     options: STATUS_OPTIONS.map((o) => ({ label: o.label, value: o.value })),
-  //   },
-  // ];
+
 
   //=================== Form Submit Handler ===================
 
@@ -150,7 +120,6 @@ const ServiceCategoryMapping = () => {
   const handleFormSubmit = async (formData: Record<string, any>) => {
     try {
       const serviceRows = formData.serviceRows || [];
-      console.log("removed", ...removedSevices)
       const payload = {
         categoryCode: formData.categoryCode,
         serviceDetails: [
@@ -171,6 +140,7 @@ const ServiceCategoryMapping = () => {
       }
 
       handleCloseDrawer();
+      getServiceMaster();
       getServiceCategoryMappingDetails();
       setRemovedServices([]);
     } catch (error) {
@@ -228,20 +198,27 @@ const ServiceCategoryMapping = () => {
 
   const getServiceMaster = async () => {
     try {
-      const res = (await getRequest(
-        API_PATH.GET_SERVICE_MASTER,
-      )) as ServiceApiResponse;
-      const data: ServiceItem[] = (res?.data?.data || []).filter(
-        (a) => a.status === 1,
-      );
-      setServices(data);
+      const res = (await getRequest(API_PATH.GET_SERVICE_MASTER_DROPDOWN)) as ServiceApiResponse;
+      const data: ServiceItem[] = res?.data?.data || [];
+      setAllServices(data); // store full list
+      const filtered = data.filter((a) => a.status === 1 && a.isMapped !== 1);
+      setServices(filtered);
       return data;
     } catch (error) {
       notifyError(COMMON_MESSAGE.DATA_FETCH_FAIL);
-      console.error("Error fetching amenities:", error);
       return [];
     }
   };
+
+  const editingServiceIds =
+    editingCategory?.serviceDetails.map((s) => s.id) ?? [];
+
+  const availableServices = isEditMode
+    ? [
+        ...services, // unmapped ones
+        ...allServices.filter((s) => editingServiceIds.includes(s.serviceId)),
+      ]
+    : services;
 
   const getServiceCategoryMappingDetails = async () => {
     try {
@@ -288,7 +265,7 @@ const ServiceCategoryMapping = () => {
       colSpan: 3,
       fieldset: "serviceRows",
       dedupSelect: true,
-      options: services.map((a) => ({
+      options: availableServices.map((a) => ({
         value: a.serviceId,
         label: a.serviceName,
       })),

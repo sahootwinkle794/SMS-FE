@@ -624,3 +624,20 @@ export const softCard = {
   background: "#fff",
   border: "1.5px solid #FFE5E5",
 } as const;
+
+export const REQUEST_STATUS = {
+  PENDING: 1,
+  SCHEDULED: 2,
+  REJECTED: 3,
+} as const;
+
+export type RequestStatus =
+  | typeof REQUEST_STATUS.PENDING
+  | typeof REQUEST_STATUS.SCHEDULED
+  | typeof REQUEST_STATUS.REJECTED;
+
+export const REQUEST_STATUS_UI = {
+  [REQUEST_STATUS.PENDING]: { label: "Pending", color: "yellow" },
+  [REQUEST_STATUS.SCHEDULED]: { label: "Scheduled", color: "blue" },
+  [REQUEST_STATUS.REJECTED]: { label: "Rejected", color: "red" },
+} as const;

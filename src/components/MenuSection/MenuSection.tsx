@@ -4,7 +4,7 @@ import {
   SimpleGrid, Stack, Text, UnstyledButton,
 } from "@mantine/core";
 import { IconChevronRight, IconGridDots, IconLock } from "@tabler/icons-react";
-import { CORAL, CORAL_DARK, CORAL_LIGHT, PEACH, softCard } from "@/utils/constants";
+import { CORAL, CORAL_LIGHT, PEACH, softCard } from "@/utils/constants";
 import { MenuItem } from "./MenuSection.types";
 import { CustomModal } from "@/components/CustomModal";
 
@@ -28,16 +28,14 @@ export function MenuSection({
   const amenities = items.filter((i) => i.section === "amenities");
   const services  = items.filter((i) => i.section !== "amenities");
 
-  // Sliced previews
   const servicesPreview  = services.slice(0, previewLimit);
   const amenitiesPreview = amenities.slice(0, previewLimit);
 
-  // Whether any section has hidden items
   const hasHidden =
     services.length  > previewLimit ||
     amenities.length > previewLimit;
 
-  // ── Shared grid renderer ────────────────────────────────────────────────────
+  // ── Grid renderer ─────────────────────────────────────────────────────────
   const renderGrid = (list: MenuItem[], cols: object = { base: 4, sm: 5, md: 7 }) => (
     <SimpleGrid cols={cols} spacing="md">
       {list.map((item) => (
@@ -50,12 +48,8 @@ export function MenuSection({
     </SimpleGrid>
   );
 
-  // ── Shared section block (divider + grid) ───────────────────────────────────
-  const renderSection = (
-    label: string,
-    list: MenuItem[],
-    cols?: object,
-  ) =>
+  // ── Section block ─────────────────────────────────────────────────────────
+  const renderSection = (label: string, list: MenuItem[], cols?: object) =>
     list.length > 0 ? (
       <Box>
         <SectionDivider label={label} />
@@ -65,16 +59,12 @@ export function MenuSection({
 
   return (
     <>
-      {/* ── Preview card ─────────────────────────────────────────────────── */}
+      {/* ── Preview card ──────────────────────────────────────────────────── */}
       <Card radius="xl" padding="lg" style={softCard}>
-
         <Group justify="space-between" mb="lg">
           <Text fw={900} fz="md" c="#1a1a1a">{title}</Text>
           {hasHidden && (
-            <Group
-              gap={4} style={{ cursor: "pointer" }}
-              onClick={() => setAllOpen(true)}
-            >
+            <Group gap={4} style={{ cursor: "pointer", }} onClick={() => setAllOpen(true)}>
               <IconGridDots size={14} color={CORAL} />
               <Text fz="sm" fw={700} c={CORAL}>See All</Text>
               <IconChevronRight size={14} color={CORAL} />
@@ -86,10 +76,9 @@ export function MenuSection({
           {renderSection("Services",  servicesPreview)}
           {renderSection("Amenities", amenitiesPreview)}
         </Stack>
-
       </Card>
 
-      {/* ── Full "See All" modal ──────────────────────────────────────────── */}
+      {/* ── Full "See All" modal ───────────────────────────────────────────── */}
       <Modal
         opened={allOpen}
         onClose={() => setAllOpen(false)}
@@ -102,22 +91,21 @@ export function MenuSection({
         size="xl"
         padding="xl"
         centered
+        scrollAreaComponent={ScrollArea.Autosize}
         styles={{
-          header:  { background: '#ddd', borderBottom: "1.5px solid #FFE5E5" },
-          body:    { background: PEACH },
+          header:  { background: "#ddd", borderBottom: "1.5px solid #FFE5E5" },
+          body:    { background: PEACH, maxHeight: "65vh", overflowY: "auto" },
           content: { borderRadius: 24 },
-          close: { color: "black" },
+          close:   { color: "black" },
         }}
       >
-        <ScrollArea mah="70vh" scrollbarSize={4} offsetScrollbars>
-          <Stack gap="xl" pt="xs">
-            {renderSection("Services",  services,  { base: 4, sm: 6, md: 8 })}
-            {renderSection("Amenities", amenities, { base: 4, sm: 6, md: 8 })}
-          </Stack>
-        </ScrollArea>
+        <Stack gap="xl" pt="xs">
+          {renderSection("Services",  services,  { base: 4, sm: 6, md: 8 })}
+          {renderSection("Amenities", amenities, { base: 4, sm: 6, md: 8 })}
+        </Stack>
       </Modal>
 
-      {/* ── Upgrade Modal ────────────────────────────────────────────────── */}
+      {/* ── Upgrade Modal ─────────────────────────────────────────────────── */}
       <CustomModal
         icon={<IconLock size={28} color={CORAL} stroke={1.8} />}
         opened={upgradeOpen}
@@ -178,7 +166,6 @@ function MenuButton({ item, onUpgradeClick }: MenuButtonProps) {
     >
       <Stack align="center" gap={6} style={{ position: "relative" }}>
 
-        {/* Notification badge */}
         {accessible && item.badge && (
           <Badge
             size="xs" circle variant="filled" color="red"
@@ -188,7 +175,6 @@ function MenuButton({ item, onUpgradeClick }: MenuButtonProps) {
           </Badge>
         )}
 
-        {/* Lock indicator */}
         {!accessible && (
           <Center
             style={{
@@ -200,7 +186,6 @@ function MenuButton({ item, onUpgradeClick }: MenuButtonProps) {
           </Center>
         )}
 
-        {/* Circle icon */}
         <Center
           style={{
             width: 58, height: 58, borderRadius: "50%",
@@ -218,7 +203,6 @@ function MenuButton({ item, onUpgradeClick }: MenuButtonProps) {
           <item.icon size={24} color="#fff" stroke={1.6} />
         </Center>
 
-        {/* Label */}
         <Text
           fz="10px" fw={800} lh={1.3} ta="center"
           style={{ color: !accessible ? "#bbb" : hovered ? CORAL : "#555", transition: "color 0.2s ease" }}

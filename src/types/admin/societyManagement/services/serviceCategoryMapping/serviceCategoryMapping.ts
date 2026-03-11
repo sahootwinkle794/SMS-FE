@@ -45,6 +45,7 @@ export interface ServiceItem {
   isMandatory: boolean;
   iconUrl: string;
   metadata: Record<string, string>;
+  isMapped?: number;
   displayOrder: number;
   status: number; // 1 = Active, 0 = Inactive (based on backend)
 }
