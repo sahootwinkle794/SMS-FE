@@ -86,6 +86,7 @@ const DemoRequestModalForm = ({
         }
 
         setIsSubmitting(true);
+
         try {
             await onSubmit(form);
         } catch (error) {

@@ -1,0 +1,59 @@
+
+export interface SlotListResponse {
+  data: SlotPaginationData;
+}
+
+export interface SlotPaginationData {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  data: Slot[];
+}
+
+export interface Slot {
+  slot_Id: string;
+  slot_Name: string;
+  start_Time: string;
+  end_Time: string;
+  duration_Minutes: number;
+  status: number;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+
+export interface ApiError {
+  message: string;
+  response?: {
+    data?: {
+      status?: number;
+      message?: string;
+      data?: unknown[];
+    };
+  };
+}
+
+
+export interface UpdateSlotResponse {
+  status: number;
+  message: string;
+  data: UpdateSlotData;
+}
+
+export interface UpdateSlotData {
+  data: Slot;
+}
+
+export interface UpdateSlot {
+  slot_Id: string;
+  slot_Name: string;
+  start_Time: string;
+  end_Time: string;
+  duration_Minutes: number;
+  status: number;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string | null;
+}

@@ -47,6 +47,4 @@ export const API_PATH = {
   // SOCIETY CONTENT SERVICE
   POST_GUEST_USER_PUBLIC: `${NEXT_PUBLIC_API_URL4}/guest-users/book-demo`,
   GET_GUEST_USER: `${NEXT_PUBLIC_API_URL4}/guest-users`,
-  GET_SLOT_DATA:`${NEXT_PUBLIC_API_URL4}/demo-slot-master`,
-  POST_SLOT_DATE_CREATE:`${NEXT_PUBLIC_API_URL4}/demo-slot-master/demo-slot`
 };

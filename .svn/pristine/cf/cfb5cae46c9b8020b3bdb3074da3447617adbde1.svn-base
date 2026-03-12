@@ -264,15 +264,6 @@ export const COMMON_MESSAGE = {
   CATEGORY_SERVICE_MAPPING_ADDED: "Service mapping created successfully",
   CATEGORY_SERVICE_MAPPING_UPDATED: "Service mapping updated successfully",
   ËRROR_MESSAGE: "Something went wrong. Please try again.",
-
-
-  DEMO_REQUEST_FETCH_FAIL: "Failed to Demo Request Details",
-  DEMO_REQUEST_CREATE_SUCCESS:"Demo request created successfully",
-
-  SLOT_SETUP_FETCH_FAIL:"Failed to fetch slot details",
-  SLOT_SETUP_CREATE_SUCCESS:"Slot setup added successfully",
-  SLOT_SET_UP_ADD_FAIL:"Failed to add slot details",
-  SLOT_SET_UP_DELETE_FAIL:"Failed to delete slot details"
 };
 
 export const PAGE_TITLE = {
@@ -282,8 +273,7 @@ export const PAGE_TITLE = {
   PACKAGE_SET_UP: "Package Set up",
   SERVICE_SET_UP: "Service Set up",
   LEAD_MGT:"Lead Management",
-  DEMO_REQ:"Demo Requests",
-  SLOT_SET_UP: "Slot Setup"
+  DEMO_REQ:"Demo Requests"
 };
 export const FOOTER_TEXT =
   "Content Owned and Maintained by Prath Technologies Pvt. Ltd";
@@ -633,21 +623,4 @@ export const gradientBg = `linear-gradient(135deg, ${CORAL} 0%, ${CORAL_LIGHT} 1
 export const softCard = {
   background: "#fff",
   border: "1.5px solid #FFE5E5",
-} as const;
-
-export const REQUEST_STATUS = {
-  PENDING: 1,
-  SCHEDULED: 2,
-  REJECTED: 3,
-} as const;
-
-export type RequestStatus =
-  | typeof REQUEST_STATUS.PENDING
-  | typeof REQUEST_STATUS.SCHEDULED
-  | typeof REQUEST_STATUS.REJECTED;
-
-export const REQUEST_STATUS_UI = {
-  [REQUEST_STATUS.PENDING]: { label: "Pending", color: "yellow" },
-  [REQUEST_STATUS.SCHEDULED]: { label: "Scheduled", color: "blue" },
-  [REQUEST_STATUS.REJECTED]: { label: "Rejected", color: "red" },
 } as const;

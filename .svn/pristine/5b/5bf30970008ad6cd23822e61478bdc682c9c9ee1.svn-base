@@ -21,14 +21,14 @@ import {
 import { DatePickerInput, TimeInput } from "@mantine/dates";
 import { IconCheck, IconEyePlus, IconRestore, IconX, } from "@tabler/icons-react";
 import { Column, DataTable } from "@/components/DataTable";
-import { RECORDS_PER_PAGE, PageTitles, COMMON_MESSAGE, REQUEST_STATUS_UI, REQUEST_STATUS, RequestStatus, PAGE_TITLE } from "@/utils/constants";
+import { RECORDS_PER_PAGE, PageTitles, COMMON_MESSAGE, REQUEST_STATUS_UI, REQUEST_STATUS, RequestStatus } from "@/utils/constants";
 import { useMenuPermissions } from "@/hooks/useMenuPermissions";
 import { usePathname } from "next/navigation";
 import moment from "moment";
 import { getRequest, postRequest } from "@/service";
 import { API_PATH } from "@/utils/apiPath";
 import { notifications } from "@mantine/notifications";
-import { ScheduleForm, ApiError, GuestUser, GuestUserResponse, DemoRequestFormState } from "@/types/admin/leadManagement/demoRequests/demoRequests";
+import { ScheduleForm, ApiError, GuestUser, GuestUserResponse ,DemoRequestFormState} from "@/types/admin/leadManagement/demoRequests/demoRequests";
 import DemoRequestModalForm from "./ModalForm";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -79,7 +79,7 @@ const DemoRequests = () => {
     const [requests, setRequests] = useState<GuestUser[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [opened, setOpened] = useState(false);
-    const [totalRecords, setTotalRecords] = useState(0);
+     const [totalRecords, setTotalRecords] = useState(0);
     /* ================= SCHEDULE MODAL STATE (optimized) ================= */
 
     const [scheduleForm, setScheduleForm] = useState<ScheduleForm>(SCHEDULE_INITIAL);
@@ -148,7 +148,7 @@ const DemoRequests = () => {
         } catch (err) {
             console.error(err);
             const error = err as ApiError;
-            notifyError(error?.response?.data?.message || COMMON_MESSAGE.DEMO_REQUEST_FETCH_FAIL);
+            notifyError(error?.response?.data?.message || COMMON_MESSAGE.SOCIETY_FETCH_FAIL);
         }
     }, [currentPage]);
 
@@ -306,7 +306,7 @@ const DemoRequests = () => {
         try {
             await postRequest(API_PATH.POST_GUEST_USER_PUBLIC, data);
 
-            notifySuccess(COMMON_MESSAGE.DEMO_REQUEST_CREATE_SUCCESS);
+            notifySuccess("Demo request created successfully");
 
             setOpened(false);
             fetchDemoRequestData();
@@ -316,7 +316,7 @@ const DemoRequests = () => {
             const error = err as ApiError;
 
             notifyError(
-                error?.response?.data?.message || COMMON_MESSAGE.DEMO_REQUEST_FETCH_FAIL
+                error?.response?.data?.message || "Failed to create demo request"
             );
         }
     };
@@ -327,7 +327,7 @@ const DemoRequests = () => {
                 {/* BREADCRUMB */}
                 <Flex justify="space-between" align="center" mb="md">
                     <AppBreadcrumbs
-                        items={[{ label: PAGE_TITLE.LEAD_MGT }, { label: PAGE_TITLE.DEMO_REQ }]}
+                        items={[{ label: "Lead Management" }, { label: "Demo Requests" }]}
                         newCount={newCount}
                     />
                 </Flex>

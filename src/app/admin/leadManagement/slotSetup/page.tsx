@@ -1,0 +1,275 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { AppBreadcrumbs, CustomModal, DataTable } from "@/components";
+import { Column } from "@/components/DataTable";
+import { Text, Badge, ActionIcon, Group, Affix, Button } from "@mantine/core";
+import { IconEdit, IconEyePlus, IconTrash } from "@tabler/icons-react";
+import { COMMON_MESSAGE, PAGE_TITLE, RECORDS_PER_PAGE, STATUS_CONFIG } from "@/utils/constants";
+import SlotManagementModalForm from "./ModalForm";
+import { SlotListResponse, Slot, ApiError, UpdateSlotData } from "@/types/admin/leadManagement/slotSetup/slotSetup";
+import { deleteRequest, getRequest, patchRequest, postRequest } from "@/service";
+import { API_PATH } from "@/utils/apiPath";
+import { notifications } from "@mantine/notifications";
+import { IMAGES } from "@/utils/images";
+
+const notifyError = (message: string) =>
+  notifications.show({ title: "Error", message, color: "red" });
+
+const notifySuccess = (message: string) =>
+  notifications.show({ title: "Successful!", message, color: "green" });
+
+const SlotSetup = () => {
+  const [opened, setOpened] = useState(false);
+  const [slotData, setSlotData] = useState<Slot[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+
+  const [editingSlot, setEditingSlot] = useState<Slot | null>(null);
+  const [loadingSlot, setLoadingSlot] = useState(false);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+
+  const columns: Column<Slot>[] = [
+    {
+      header: "S.No",
+      width: "8%",
+      align: "center",
+      render: (_value, _row, index) => (
+        <Text>{(currentPage - 1) * RECORDS_PER_PAGE + index + 1}</Text>
+      ),
+    },
+    {
+      header: "Actions",
+      width: "15%",
+      align: "center",
+      render: (_value, row) => (
+        <Group gap={6} justify="center">
+          <ActionIcon
+            color="blue"
+            variant="light"
+          
+            onClick={() => handleEditClick(row.slot_Id)}
+          >
+            <IconEdit size={16} />
+          </ActionIcon>
+          <ActionIcon
+            color="red"
+            variant="light"
+            onClick={() => handleDelete(row.slot_Id)}
+          >
+            <IconTrash size={16} />
+          </ActionIcon>
+        </Group>
+      ),
+    },
+    {
+      header: "Slot Name",
+      accessor: "slot_Name",
+      width: "25%",
+    },
+    {
+      header: "Start Time",
+      accessor: "start_Time",
+      width: "20%",
+    },
+    {
+      header: "End Time",
+      accessor: "end_Time",
+      width: "20%",
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      align: "center",
+      width: "12%",
+      render: (value) => {
+        const status = Number(value) as 0 | 1;
+        return (
+          <Badge size="sm" radius="xs" variant="filled" color={STATUS_CONFIG[status]?.color}>
+            {STATUS_CONFIG[status]?.label}
+          </Badge>
+        );
+      },
+    },
+  ];
+
+  
+  const handleEditClick = async (slotId: string) => {
+    try {
+      setLoadingSlot(true);
+
+      const response = await getRequest<{ data: UpdateSlotData }>(
+        `${API_PATH.GET_SLOT_DATA}/${slotId}`
+      );
+
+      //  FIX 3: Set the fetched slot data (adjust based on your API response structure)
+      const slotDetail = response?.data?.data || response?.data;
+      setEditingSlot(slotDetail);
+      setOpened(true);
+    } catch (err) {
+      console.error(err);
+      const error = err as ApiError;
+      notifyError(
+        error?.response?.data?.message || "Failed to fetch slot details"
+      );
+    } finally {
+      setLoadingSlot(false);
+    }
+  };
+
+  const handleDelete = (slotId: string) => {
+    setSelectedItem(slotId);
+    setDeleteModalOpen(true);
+  };
+
+  const fetchDemoRequestData = useCallback(async () => {
+    try {
+      const payload = {
+        search: "",
+        page: currentPage,
+        limit: RECORDS_PER_PAGE,
+        sortBy: "created_at",
+        sortOrder: "DESC",
+      };
+
+      const response = await getRequest<SlotListResponse>(
+        API_PATH.GET_SLOT_DATA,
+        payload
+      );
+
+      setSlotData(response?.data?.data);
+      setTotalRecords(response?.data?.total ?? 0);
+    } catch (err) {
+      console.error(err);
+      const error = err as ApiError;
+      notifyError(
+        error?.response?.data?.message || COMMON_MESSAGE.SLOT_SETUP_FETCH_FAIL
+      );
+    }
+  }, [currentPage]);
+
+  useEffect(() => {
+    fetchDemoRequestData();
+  }, [fetchDemoRequestData]);
+
+ 
+  const handleSubmit = async (data: Record<string, string>) => {
+    try {
+      const payload = {
+        slotName: data.slotName,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        status: Number(data.status),
+      };
+
+     
+      if (editingSlot && editingSlot.slot_Id) {
+        console.log("editingSlot.slot_Id", editingSlot.slot_Id);
+        await patchRequest(
+          `${API_PATH.GET_SLOT_DATA}/${editingSlot.slot_Id}`,
+          payload
+        );
+        notifySuccess("Slot updated successfully");
+      } else {
+        await postRequest(API_PATH.POST_SLOT_DATE_CREATE, payload);
+        notifySuccess(COMMON_MESSAGE.SLOT_SETUP_CREATE_SUCCESS);
+      }
+
+     
+      setEditingSlot(null);
+      setOpened(false);
+      fetchDemoRequestData();
+    } catch (err: unknown) {
+      console.error(err);
+      const error = err as ApiError;
+      notifyError(
+        error?.response?.data?.message || COMMON_MESSAGE.SLOT_SET_UP_ADD_FAIL
+      );
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedItem) return;
+    try {
+      await deleteRequest(`${API_PATH.GET_SLOT_DATA}/${selectedItem}`);
+      notifySuccess(COMMON_MESSAGE.SLOT_SET_UP_DELETE_FAIL);
+      setDeleteModalOpen(false);
+      setSelectedItem(null);
+      fetchDemoRequestData();
+    } catch {
+      notifyError("Failed to delete service");
+    }
+  };
+
+
+  const handleModalClose = () => {
+    setOpened(false);
+    setEditingSlot(null);
+  };
+
+  return (
+    <>
+      <AppBreadcrumbs
+        items={[
+          { label: PAGE_TITLE.LEAD_MGT },
+          { label: PAGE_TITLE.SLOT_SET_UP },
+        ]}
+      />
+
+      <DataTable
+        data={slotData}
+        columns={columns}
+        loading={loadingSlot}
+        pageSize={RECORDS_PER_PAGE}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        totalRecords={totalRecords}
+      />
+
+      <Affix position={{ bottom: 40, right: 20 }}>
+        <Button
+          leftSection={<IconEyePlus size={20} />}
+          radius="xl"
+          size="md"
+          color="primary.5"
+          onClick={() => {
+            setEditingSlot(null);
+            setOpened(true);
+          }}
+          style={{
+            position: "fixed",
+            bottom: 32,
+            right: 32,
+            zIndex: 100,
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+          }}
+        >
+          Add Time Slot
+        </Button>
+      </Affix>
+
+      <SlotManagementModalForm
+        opened={opened}
+        onClose={handleModalClose}
+        onSubmit={handleSubmit}
+        onEdit={editingSlot}
+      />
+
+      <CustomModal
+        opened={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        icon={IMAGES.WARNING}
+        title="Confirm Deletion"
+        subtext="Are you sure you want to delete this Service?"
+        actionText="Yes, Delete"
+        onAction={handleConfirmDelete}
+        showCancel
+        cancelText="No"
+      />
+    </>
+  );
+};
+
+export default SlotSetup;

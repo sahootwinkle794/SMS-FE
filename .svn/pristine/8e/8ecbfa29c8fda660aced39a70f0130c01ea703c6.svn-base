@@ -1,0 +1,286 @@
+"use client";
+import { AppBreadcrumbs, CustomModal, DataTable } from "@/components";
+import { deleteRequest, getRequest, patchRequest, postRequest } from "@/service";
+import { API_PATH } from "@/utils/apiPath";
+import { COMMON_MESSAGE, PAGE_TITLE, RECORDS_PER_PAGE, STATUS_CONFIG } from "@/utils/constants";
+import { RouteConfig } from "@/utils/routeConfig";
+import { ActionIcon, Affix, Badge, Button, Group, Text, Tooltip, Center } from "@mantine/core";
+import { IconEdit, IconPlus, IconTrash, IconX, IconPhoto } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import { notifications } from "@mantine/notifications";
+import { Column } from "@/components/DataTable";
+import ServiceSetupModalForm from "./ModalForm";
+import {
+  ServiceFormState,
+  ServiceItem,
+  ServiceApiResponse,
+} from "@/types/admin/societyManagement/services/serviceSetup/serviceSetup";
+import { IMAGES } from "@/utils/images";
+
+export interface ApiErrorResponse {
+  status: number;
+  message: string;
+  data: unknown[];
+}
+
+// ── Notification helpers ──────────────────────────────────────────────────────
+
+const notifyError = (msg: string) =>
+  notifications.show({ title: "Error", message: msg, color: "red", icon: <IconX size={16} /> });
+
+const notifySuccess = (msg: string) =>
+  notifications.show({ title: "Successful!", message: msg, color: "green" });
+
+// ── Base64Icon — tries svg+xml first, falls back to png on error ──────────────
+
+const Base64Icon = ({ base64, alt }: { base64: string; alt: string }) => {
+  const [src, setSrc] = useState(`data:image/svg+xml;base64,${base64}`);
+  return (
+    <img
+      src={src}
+      alt={alt}
+      width={28}
+      height={28}
+      style={{ objectFit: "contain", borderRadius: 4 }}
+      onError={() => {
+        if (!src.includes("image/png")) {
+          setSrc(`data:image/png;base64,${base64}`);
+        }
+      }}
+    />
+  );
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+const ServiceSetup = () => {
+  const [serviceData, setServiceData] = useState<ServiceItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [opened, setOpened] = useState(false);
+  const [editing, setEditing] = useState<ServiceItem | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<ServiceItem | null>(null);
+
+  // ── Fetch ───────────────────────────────────────────────────────────────────
+
+  const fetchServiceDetails = async () => {
+    setLoading(true);
+    try {
+      const res = (await getRequest(API_PATH.GET_SERVICE_MASTER, {
+        search: "",
+        page: currentPage,
+        limit: RECORDS_PER_PAGE,
+        sortBy: "created_at",
+        sortOrder: "DESC",
+      })) as ServiceApiResponse;
+
+      setServiceData(res?.data?.data ?? []);
+      setTotalRecords(res?.data?.total ?? 0);
+    } catch (err: unknown) {
+      const error = err as ApiErrorResponse;
+      notifications.show({
+        title: "Error",
+        message: error?.message || COMMON_MESSAGE.SERVICE_DELETED,
+        color: "red",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServiceDetails();
+  }, [currentPage]);
+
+  // ── Add / Edit ──────────────────────────────────────────────────────────────
+
+  const handleSubmit = async (formData: ServiceFormState): Promise<void> => {
+    try {
+      if (editing) {
+        const { serviceId, ...rest } = formData as ServiceFormState & { serviceId?: string };
+        await patchRequest(API_PATH.GET_SERVICE_MASTER, { ...rest, id: editing.serviceId });
+        notifySuccess(COMMON_MESSAGE.SERVICE_UPDATE);
+      } else {
+        const { id, ...payload } = formData;
+        await postRequest(API_PATH.GET_SERVICE_MASTER, payload);
+        notifySuccess(COMMON_MESSAGE.SERVICE_ADDED);
+      }
+      closeAddEditModal();
+      fetchServiceDetails();
+    } catch (error: unknown) {
+      console.log("error", error);
+      const message = error instanceof Error ? error?.message : COMMON_MESSAGE.OPERATION_FAILED;
+      notifyError(message);
+      throw error;
+    }
+  };
+
+  const openAddModal = () => {
+    setEditing(null);
+    setOpened(true);
+  };
+
+  const closeAddEditModal = () => {
+    setOpened(false);
+    setEditing(null);
+  };
+
+  const handleEditClick = (row: ServiceItem) => {
+    setEditing(row);
+    setOpened(true);
+  };
+
+  // ── Delete ──────────────────────────────────────────────────────────────────
+
+  const handleDelete = (row: ServiceItem) => {
+    setSelectedItem(row);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedItem) return;
+    try {
+      await deleteRequest(`${API_PATH.GET_SERVICE_MASTER}/${selectedItem.serviceId}`);
+      notifySuccess(COMMON_MESSAGE.SERVICE_DELETED);
+      setDeleteModalOpen(false);
+      setSelectedItem(null);
+      fetchServiceDetails();
+    } catch {
+      notifyError("Failed to delete service");
+    }
+  };
+
+  // ── Columns ─────────────────────────────────────────────────────────────────
+
+  const columns: Column<ServiceItem>[] = [
+    {
+      header: "S.No",
+      width: "8%",
+      align: "center",
+      render: (_value, _row, index) => (
+        <Text>{(currentPage - 1) * RECORDS_PER_PAGE + index + 1}</Text>
+      ),
+    },
+    {
+      header: "Actions",
+      width: "5%",
+      align: "left",
+      render: (_value, row) => (
+        <Group wrap="nowrap" gap={8}>
+          <Tooltip label="Edit Service">
+            <ActionIcon color="blue" variant="light" radius="md" onClick={() => handleEditClick(row)}>
+              <IconEdit size={16} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Delete Service">
+            <ActionIcon color="red" variant="light" radius="md" onClick={() => handleDelete(row)}>
+              <IconTrash size={16} />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
+      ),
+    },
+    { header: "Service Code", accessor: "serviceCode", width: "10%" },
+    { header: "Service Name", accessor: "serviceName", width: "15%" },
+    { header: "Service Type", accessor: "serviceType", width: "10%" },
+    { header: "Description", accessor: "description", width: "20%" },
+    {
+      header: "Icon",
+      accessor: "iconUrl",
+      width: "6%",
+      align: "center",
+      render: (_value, row) =>
+        row.iconUrl ? (
+          <Center>
+            <Base64Icon base64={row.iconUrl} alt={`${row.serviceName} icon`} />
+          </Center>
+        ) : (
+          <Center>
+            <Tooltip label="No icon uploaded">
+              <IconPhoto size={20} color="gray" />
+            </Tooltip>
+          </Center>
+        ),
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      width: "8%",
+      align: "center",
+      render: (value) => {
+        const status = Number(value) as 0 | 1;
+        return (
+          <Badge size="sm" radius="xs" variant="filled" color={STATUS_CONFIG[status]?.color}>
+            {STATUS_CONFIG[status]?.label}
+          </Badge>
+        );
+      },
+    },
+  ];
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+
+  return (
+    <>
+      <AppBreadcrumbs
+        items={[
+          { label: PAGE_TITLE.SOCIETY_MANAGEMENT, path: RouteConfig.SOCIETY_MGT },
+          { label: PAGE_TITLE.SERVICE_CONFIGURATION, path: () => window.history.back() },
+          { label: PAGE_TITLE.SERVICE_SET_UP },
+        ]}
+      />
+
+      <DataTable
+        data={serviceData}
+        columns={columns}
+        loading={loading}
+        pageSize={RECORDS_PER_PAGE}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        totalRecords={totalRecords}
+      />
+
+      <Affix position={{ bottom: 40, right: 20 }}>
+        <Button
+          leftSection={<IconPlus size={20} />}
+          radius="xl"
+          size="md"
+          color="primary.5"
+          onClick={openAddModal}
+          style={{
+            position: "fixed",
+            bottom: 32,
+            right: 32,
+            zIndex: 100,
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+          }}
+        >
+          Add Service
+        </Button>
+      </Affix>
+
+      <ServiceSetupModalForm
+        opened={opened}
+        editing={editing}
+        onClose={closeAddEditModal}
+        onSubmit={handleSubmit}
+      />
+
+      <CustomModal
+        opened={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        icon={IMAGES.WARNING}
+        title="Confirm Deletion"
+        subtext="Are you sure you want to delete this Service?"
+        actionText="Yes, Delete"
+        onAction={handleConfirmDelete}
+        showCancel
+        cancelText="No"
+      />
+    </>
+  );
+};
+
+export default ServiceSetup;

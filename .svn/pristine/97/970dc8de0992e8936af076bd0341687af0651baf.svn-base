@@ -1,0 +1,240 @@
+"use client";
+
+import {
+  Container,
+  Grid,
+  Box,
+  Title,
+  Card,
+  Text,
+  Group,
+  Image,
+  Transition,
+} from "@mantine/core";
+import { Carousel } from "@mantine/carousel";
+import "@mantine/carousel/styles.css";
+import { COLORS } from "../../constants";
+import { IMAGE } from "../../assets/utils/images";
+import { useIntersection } from "@mantine/hooks";
+import Autoplay from "embla-carousel-autoplay";
+import { useRef } from "react";
+
+export default function FeaturesSection() {
+  const autoplay = useRef(Autoplay({ delay: 3000, stopOnInteraction: false }));
+  const { ref, entry } = useIntersection({
+    threshold: 0.3,
+  });
+  return (
+    <Box
+      className="feature"
+      id="features"
+      pt={80}
+      style={{ backgroundColor: COLORS.lightBg }}
+    >
+      <Container size="xl" className="feature-con">
+        <Grid>
+          <Grid.Col span={{ base: 12, md: 4 }} ref={ref}>
+            <Transition
+              mounted={entry?.isIntersecting || false}
+              transition="slide-up"
+              duration={700}
+            >
+              {(styles) => (
+                <div style={styles}>
+                  <Title order={4} fw={400} className="feature-title">
+                    Why SMS?
+                  </Title>
+
+                  <Title order={3} fw={100} className="feature-title2">
+                    One Platform.
+                  </Title>
+
+                  <Title order={3} fw={600} className="feature-title2">
+                    Three Experiences.
+                    <br /> Zero Complexity.
+                  </Title>
+
+                  <Title order={4} className="feature-title3">
+                    Every society is different — so why use a one-size-fits-all
+                    solution?
+                  </Title>
+
+                  <Title order={6} fw={400} className="feature-title4">
+                    SMS adapts automatically for High-End, Mid-End, and Low-End
+                    societies.
+                  </Title>
+                </div>
+              )}
+            </Transition>
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 8 }}>
+            <Carousel
+              withIndicators
+              withControls
+              height={370}
+              slideSize="33.333333%"
+              slideGap="md"
+              plugins={[autoplay.current]}
+              emblaOptions={{
+                loop: true,
+                align: "start",
+                slidesToScroll: 1,
+                dragFree: false,
+              }}
+              onMouseEnter={autoplay.current.stop}
+              onMouseLeave={autoplay.current.reset}
+              styles={{
+                control: {
+                  backgroundColor: "red",
+                  color: "white",
+                },
+                indicator: {
+                  backgroundColor: "red",
+                },
+              }}
+            >
+              <Carousel.Slide>
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  radius="md"
+                  withBorder
+                  className="featureCard"
+                >
+                  <Group justify="space-between" mt="md" mb="xs">
+                    <Image
+                      src={IMAGE.ICON_FEATURE_ONE}
+                      alt="iconFeatureOne"
+                      className="feature-icon"
+                    />
+                    <Text size="xl" fw={700} className="Feature-card-text">
+                      Simplifies daily operations
+                    </Text>
+                  </Group>
+
+                  <Text size="sm" c="dimmed" className="feature-p">
+                    Create fast, responsive websites that hook visitors and push
+                    them down the conversion pipeline.
+                  </Text>
+                </Card>
+              </Carousel.Slide>
+              <Carousel.Slide>
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  radius="md"
+                  withBorder
+                  className="featureCard"
+                >
+                  <Group justify="space-between" mt="md" mb="xs">
+                    <Image
+                      src={IMAGE.ICON_FEATURE_TWO}
+                      alt="iconFeatureOne"
+                      className="feature-icon"
+                    />
+                    <Text size="xl" fw={700} className="Feature-card-text">
+                      Automates finances & communication
+                    </Text>
+                  </Group>
+
+                  <Text size="sm" c="dimmed" className="feature-p">
+                    Build custom applications that automate staff tasks, meet
+                    regulatory requirements, and improve service delivery.
+                  </Text>
+                </Card>
+              </Carousel.Slide>
+              <Carousel.Slide>
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  radius="md"
+                  withBorder
+                  className="featureCard"
+                >
+                  <Group justify="space-between" mt="md" mb="xs">
+                    <Image
+                      src={IMAGE.ICON_FEATURE_THREE}
+                      alt="iconFeatureOne"
+                      className="feature-icon"
+                    />
+                    <Text size="xl" fw={700} className="Feature-card-text">
+                      Strengthens Security
+                    </Text>
+                  </Group>
+
+                  <Text size="sm" c="dimmed" className="feature-p">
+                    Turn data into insights to make smarter business decisions.
+                  </Text>
+                </Card>
+              </Carousel.Slide>
+              <Carousel.Slide>
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  radius="md"
+                  withBorder
+                  className="featureCard"
+                >
+                  <Group justify="space-between" mt="md" mb="xs">
+                    <Image
+                      src={IMAGE.ICON_FEATURE_ONE}
+                      alt="iconFeatureOne"
+                      className="feature-icon"
+                    />
+                    <Text size="xl" fw={700} className="Feature-card-text">
+                      Simplifies daily operations
+                    </Text>
+                  </Group>
+
+                  <Text size="sm" c="dimmed" className="feature-p">
+                    Create fast, responsive websites that hook visitors and push
+                    them down the conversion pipeline.
+                  </Text>
+                </Card>
+              </Carousel.Slide>
+              <Carousel.Slide>
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  radius="md"
+                  withBorder
+                  className="featureCard"
+                >
+                  <Group justify="space-between" mt="md" mb="xs">
+                    <Image
+                      src={IMAGE.ICON_FEATURE_TWO}
+                      alt="iconFeatureOne"
+                      className="feature-icon"
+                    />
+                    <Text size="xl" fw={700} className="Feature-card-text">
+                      Simplifies daily operations
+                    </Text>
+                  </Group>
+
+                  <Text size="sm" c="dimmed" className="feature-p">
+                    Create fast, responsive websites that hook visitors and push
+                    them down the conversion pipeline.
+                  </Text>
+                </Card>
+              </Carousel.Slide>
+            </Carousel>
+          </Grid.Col>
+        </Grid>
+        {/* <SectionHeader
+          subtitle="Why SMS?"
+          highlightedText="Three Experiences."
+          title="Zero Complexity."
+        />
+
+        <Grid gutter={40}>
+          {FEATURES.map((feature, index) => (
+            <Grid.Col key={index} span={{ base: 12, sm: 4 }}>
+              <FeatureCard feature={feature} />
+            </Grid.Col>
+          ))}
+        </Grid> */}
+      </Container>
+      <Image src={IMAGE.FEATURE_ART} alt="Feature Art" />
+    </Box>
+  );
+}

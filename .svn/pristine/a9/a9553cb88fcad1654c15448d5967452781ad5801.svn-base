@@ -15,6 +15,7 @@ import {
   Transition,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import axios from "axios";
 import { useState } from "react";
 import { COLORS } from "../../constants";
 import { IMAGE } from "../../assets/utils/images";
@@ -23,8 +24,6 @@ import { notifications } from "@mantine/notifications";
 import { IconCircleCheck, IconX } from "@tabler/icons-react";
 import { API_PATH } from "@/utils/apiPath";
 import { postRequest } from "@/service";
-import { REGEX } from "@/utils/constants";
-// import { AxiosError } from "axios";
 
 type FormValues = {
   name: string;
@@ -34,22 +33,11 @@ type FormValues = {
   projectDescription: string;
 };
 
-export interface ApiError {
-    message: string;
-    response?: {
-        data?: {
-            status?: number;
-            message?: string;
-            data?: unknown[];
-        };
-    };
-}
-
 export default function ContactSection() {
   const { ref, entry } = useIntersection({ threshold: 0.3 });
   const [loading, setLoading] = useState(false);
 
-  // const API_URL = process.env.NEXT_PUBLIC_API_URL4;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL4;
 
   const form = useForm<FormValues>({
     initialValues: {
@@ -62,21 +50,18 @@ export default function ContactSection() {
 
     validate: {
       name: (value) =>
-        // value.length < 2 ? "Name must be at least 2 characters" : null,
-        REGEX.NAME.test(value) ? null : "Enter a valid name",
+        value.length < 2 ? "Name must be at least 2 characters" : null,
 
       mobile: (value) =>
-        // /^[0-9]{10}$/.test(value) ? null : "Enter valid 10 digit mobile number",
-        REGEX.PHONE.test(value) ? null : "Enter valid mobile number",
+        /^[0-9]{10}$/.test(value) ? null : "Enter valid 10 digit mobile number",
 
       email: (value) =>
-        // /^\S+@\S+\.\S+$/.test(value) ? null : "Invalid email address",
-        REGEX.EMAIL.test(value) ? null : "Invalid email address",
+        /^\S+@\S+\.\S+$/.test(value) ? null : "Invalid email address",
 
       city: (value) => (value.length === 0 ? "City is required" : null),
 
-      // projectDescription: (value) =>
-      //   value.length < 10 ? "Minimum 10 characters required" : null,
+      projectDescription: (value) =>
+        value.length < 10 ? "Minimum 10 characters required" : null,
     },
   });
 
@@ -100,47 +85,23 @@ export default function ContactSection() {
       // SUCCESS NOTIFICATION
       notifications.show({
         title: "Thank You!",
-        message: "Your request has been submitted successfully.",
+        message:
+          "Your request has been submitted successfully. Our team will contact you within 24-48 hours.",
         color: "green",
         icon: <IconCircleCheck size={20} />,
       });
 
       form.reset();
-    } catch (err: unknown) {
-      //  catch (error: unknown) {
-      //   console.error("API Error:", error.message);
+    } catch (error) {
+      console.error("API Error:", error);
 
-      //   let message = "Unable to submit form.";
-
-      //   const err = error as {
-      //     response?: {
-      //       data?: {
-      //         message?: string;
-      //       };
-      //     };
-      //   };
-
-      //   if (err?.response?.data?.message) {
-      //     message = err.response.data.message;
-      //   }
-
-      //   notifications.show({
-      //     title: "Submission Failed",
-      //     message: message,
-      //     color: "red",
-      //     icon: <IconX size={20} />,
-      //   });
-      // }
-      console.error(err);
-
-      const error = err as ApiError;
-
-       notifications.show({
-          title: "Submission Failed",
-          message: error?.message || "Unable to submit form.",
-          color: "red",
-          icon: <IconX size={20} />,
-        });
+      // ERROR NOTIFICATION
+      notifications.show({
+        title: "Submission Failed",
+        message: "Something went wrong. Please try again.",
+        color: "red",
+        icon: <IconX size={20} />,
+      });
     } finally {
       setLoading(false);
     }
