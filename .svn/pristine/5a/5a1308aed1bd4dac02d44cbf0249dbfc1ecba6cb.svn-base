@@ -9,12 +9,17 @@ import {
   Accordion,
   Image,
   Grid,
+  Transition,
 } from "@mantine/core";
 import { FAQS, COLORS } from "../../constants";
 import { IMAGE } from "../../assets/utils/images";
+import { useIntersection } from "@mantine/hooks";
+import { CSSProperties } from "react";
 
 export default function FAQSection() {
- 
+  const { ref, entry } = useIntersection({
+    threshold: 0.3,
+  });
 
   const [activeFaq, setActiveFaq] = useState<string | null>(null);
 
@@ -29,17 +34,23 @@ export default function FAQSection() {
         <Grid gutter={60}>
           <Grid.Col span={{ base: 12, md: 6 }}>
             <Box>
-              <Stack gap="xl" mb={60}>
-               
+              <Stack gap="xl" mb={60} ref={ref}>
+                <Transition
+                  mounted={entry?.isIntersecting ?? false}
+                  transition="slide-up"
+                  duration={350}
+                >
+                  {(styles: CSSProperties) => (
                     <Text
                       component="h2"
                       size="42px"
                       className="faq-head"
-                      
+                      style={styles}
                     >
                       FAQs on SMS
                     </Text>
-                
+                  )}
+                </Transition>
               </Stack>
 
               <Accordion

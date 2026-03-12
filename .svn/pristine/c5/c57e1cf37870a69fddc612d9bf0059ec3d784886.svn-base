@@ -7,8 +7,9 @@ import {
   Box,
   Title,
   Button,
-  Image
+  Image,
 } from "@mantine/core";
+// import ServiceItem from "../ui/ServiceItem";
 import { COLORS } from "../../constants";
 import { Carousel } from "@mantine/carousel";
 import { IMAGE } from "../../assets/utils/images";
@@ -29,7 +30,7 @@ export default function ServicesSection() {
       <Container size="xl">
         <Grid gutter={60} align="center">
           <Grid.Col span={{ base: 12, md: 6 }} className="serve-one">
-            <Stack gap="xl" className="serve-stack">
+            <Stack gap="xl" className="serve-stack" align="center">
               <Title
                 order={2}
                 size={32}
@@ -39,7 +40,8 @@ export default function ServicesSection() {
               >
                 WHO WE SERVE ?
               </Title>
-              <Stack gap="md">
+
+              <Stack gap="md" align="center">
                 <Image
                   src={IMAGE.ICON_SERVE_ONE}
                   alt="iconServeOne"
@@ -51,7 +53,7 @@ export default function ServicesSection() {
                   premium amenities, and luxury-grade UX.
                 </Title>
               </Stack>
-              <Stack gap="md">
+              <Stack gap="md" align="center">
                 <Image
                   src={IMAGE.ICON_SERVE_TWO}
                   alt="iconServeTwo"
@@ -63,7 +65,7 @@ export default function ServicesSection() {
                   management, and community engagement tools.
                 </Title>
               </Stack>
-              <Stack gap="md">
+              <Stack gap="md" align="center">
                 <Image
                   src={IMAGE.ICON_SERVE_THREE}
                   alt="iconServeThree"

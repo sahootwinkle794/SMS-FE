@@ -12,13 +12,14 @@ import {
   Button,
   Image,
   Box,
-  Modal,
-  Center,
+  Transition,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useState } from "react";
 import { COLORS } from "../../constants";
 import { IMAGE } from "../../assets/utils/images";
+import { useIntersection } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { IconCircleCheck, IconX } from "@tabler/icons-react";
 import { API_PATH } from "@/utils/apiPath";
 import { postRequest } from "@/service";
@@ -44,10 +45,8 @@ export interface ApiError {
 }
 
 export default function ContactSection() {
+  const { ref, entry } = useIntersection({ threshold: 0.3 });
   const [loading, setLoading] = useState(false);
-  const [opened, setOpened] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [popupMessage, setPopupMessage] = useState("");
 
   const form = useForm<FormValues>({
     initialValues: {
@@ -83,21 +82,29 @@ export default function ContactSection() {
         projectDescription: values.projectDescription,
       };
 
+      // console.log("Payload:", payload);
       await postRequest(API_PATH.POST_GUEST_USER_PUBLIC, payload);
 
-      setSuccess(true);
-      setPopupMessage(
-        "Thank you! Your request has been submitted successfully."
-      );
-      setOpened(true);
+      // SUCCESS NOTIFICATION
+      notifications.show({
+        title: "Thank You!",
+        message: "Your request has been submitted successfully.",
+        color: "green",
+        icon: <IconCircleCheck size={20} />,
+      });
 
       form.reset();
     } catch (err: unknown) {
+      console.error(err);
+
       const error = err as ApiError;
 
-      setSuccess(false);
-      setPopupMessage(error?.message || "Unable to submit form.");
-      setOpened(true);
+      notifications.show({
+        title: "Submission Failed",
+        message: error?.message || "Unable to submit form.",
+        color: "red",
+        icon: <IconX size={20} />,
+      });
     } finally {
       setLoading(false);
     }
@@ -109,49 +116,24 @@ export default function ContactSection() {
       id="contact"
       style={{ backgroundColor: "white", padding: "60px 0" }}
     >
-      {/* POPUP MODAL */}
-      <Modal
-        opened={opened}
-        onClose={() => setOpened(false)}
-        centered
-        withCloseButton={false}
-        radius="lg"
-      >
-        <Center>
-          <Stack align="center" gap="md">
-            {success ? (
-              <IconCircleCheck size={60} color="green" />
-            ) : (
-              <IconX size={60} color="red" />
-            )}
-
-            <Title order={4}>
-              {success ? "Thank You!" : "Submission Failed"}
-            </Title>
-
-            <Text ta="center">{popupMessage}</Text>
-
-            <Button
-              variant="gradient"
-              gradient={{ from: "#FF7853", to: "#FF2C36", deg: 135 }}
-              onClick={() => setOpened(false)}
-            >
-              Close
-            </Button>
-          </Stack>
-        </Center>
-      </Modal>
-
       <Container size="xl">
         <Grid gutter={60} align="center">
           {/* LEFT SIDE CONTENT */}
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Stack gap="xl">
-              <Title className="contact-title">
-                Ready to discuss <br /> your toughest <br />
-                <Text className="contact-title2">tech challenges?</Text>
-              </Title>
 
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <Stack gap="xl" ref={ref}>
+              <Transition
+                mounted={entry?.isIntersecting || false}
+                transition="slide-up"
+                duration={700}
+              >
+                {(styles) => (
+                  <Title className="contact-title" style={styles}>
+                    Ready to discuss <br /> your toughest <br />
+                    <Text className="contact-title2">tech challenges?</Text>
+                  </Title>
+                )}
+              </Transition>
               <Title className="contact-title3">
                 Fill out the form and get on a call within 24-48 hours with our
                 product and tech expert.
@@ -160,7 +142,6 @@ export default function ContactSection() {
               <Title className="contact-title3">
                 No account managers –
                 <Text component="span" className="highlight">
-                  {" "}
                   that’s a promise.
                 </Text>
               </Title>
@@ -168,6 +149,7 @@ export default function ContactSection() {
           </Grid.Col>
 
           {/* RIGHT SIDE FORM */}
+
           <Grid.Col span={{ base: 12, md: 6 }}>
             <Paper
               shadow="md"

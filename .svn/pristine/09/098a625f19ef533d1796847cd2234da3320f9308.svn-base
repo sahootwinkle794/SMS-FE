@@ -7,7 +7,6 @@ import {
   Title,
   Card,
   Text,
-  Button,
   Group,
   Image,
 } from "@mantine/core";
@@ -16,16 +15,10 @@ import "@mantine/carousel/styles.css";
 import { COLORS } from "../../constants";
 import { IMAGE } from "../../assets/utils/images";
 import Autoplay from "embla-carousel-autoplay";
-import { useRef, useState } from "react";
-import { EmblaCarouselType } from "embla-carousel";
+import { useRef } from "react";
 
 export default function FeaturesSection() {
   const autoplay = useRef(Autoplay({ delay: 3000, stopOnInteraction: false }));
-
-  const [embla, setEmbla] = useState<EmblaCarouselType | null>(null);
-
-  const scrollPrev = () => embla?.scrollPrev();
-  const scrollNext = () => embla?.scrollNext();
 
   return (
     <Box
@@ -34,7 +27,7 @@ export default function FeaturesSection() {
       pt={80}
       style={{ backgroundColor: COLORS.lightBg }}
     >
-      <Container size="xl" className="feature-con ">
+      <Container size="xl" className="feature-con">
         <Grid>
           <Grid.Col span={{ base: 12, md: 4 }}>
             <div>
@@ -60,39 +53,12 @@ export default function FeaturesSection() {
                 SMS adapts automatically for High-End, Mid-End, and Low-End
                 societies.
               </Title>
-
-              {/* CUSTOM BUTTONS */}
-              <Group mt="lg">
-                <Button
-                  onClick={scrollPrev}
-                  variant="outline"
-                  className="control-btn"
-                >
-                  <Image
-                    src={IMAGE.LEFT_ARROW}
-                    alt="left-arrow"
-                    className="arrow-icon"
-                  />
-                </Button>
-                <Button
-                  onClick={scrollNext}
-                  variant="outline"
-                  className="control-btn"
-                >
-                  <Image
-                    src={IMAGE.RIGHT_ARROW}
-                    alt="right-arrow"
-                    className="arrow-icon"
-                  />
-                </Button>
-              </Group>
             </div>
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 8 }}>
             <Carousel
-              getEmblaApi={setEmbla}
-              withControls={false} // remove default arrows
-              withIndicators={false} // optional
+              withIndicators
+              withControls
               height={370}
               slideSize="33.333333%"
               slideGap="md"
@@ -101,9 +67,19 @@ export default function FeaturesSection() {
                 loop: true,
                 align: "start",
                 slidesToScroll: 1,
+                dragFree: false,
               }}
               onMouseEnter={autoplay.current.stop}
               onMouseLeave={autoplay.current.reset}
+              styles={{
+                control: {
+                  backgroundColor: "red",
+                  color: "white",
+                },
+                indicator: {
+                  backgroundColor: "red",
+                },
+              }}
             >
               <Carousel.Slide>
                 <Card
@@ -232,6 +208,19 @@ export default function FeaturesSection() {
             </Carousel>
           </Grid.Col>
         </Grid>
+        {/* <SectionHeader
+          subtitle="Why SMS?"
+          highlightedText="Three Experiences."
+          title="Zero Complexity."
+        />
+
+        <Grid gutter={40}>
+          {FEATURES.map((feature, index) => (
+            <Grid.Col key={index} span={{ base: 12, sm: 4 }}>
+              <FeatureCard feature={feature} />
+            </Grid.Col>
+          ))}
+        </Grid> */}
       </Container>
       <Image src={IMAGE.FEATURE_ART} alt="Feature Art" />
     </Box>

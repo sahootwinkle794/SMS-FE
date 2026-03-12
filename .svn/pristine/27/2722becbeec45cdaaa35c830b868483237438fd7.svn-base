@@ -7,9 +7,10 @@ import {
   Box,
   Title,
   Button,
-  Image
+  Image,
 } from "@mantine/core";
-import { COLORS } from "../../constants";
+import ServiceItem from "../ui/ServiceItem";
+import { SERVICES, COLORS } from "../../constants";
 import { Carousel } from "@mantine/carousel";
 import { IMAGE } from "../../assets/utils/images";
 import Autoplay from "embla-carousel-autoplay";
@@ -17,7 +18,7 @@ import { useRef } from "react";
 
 export default function ServicesSection() {
   const autoplay = useRef(Autoplay({ delay: 4000 }));
-
+ 
   return (
     <Box
       className="service"
@@ -28,17 +29,20 @@ export default function ServicesSection() {
     >
       <Container size="xl">
         <Grid gutter={60} align="center">
-          <Grid.Col span={{ base: 12, md: 6 }} className="serve-one">
-            <Stack gap="xl" className="serve-stack">
-              <Title
-                order={2}
-                size={32}
-                fw={600}
-                c="white"
-                className="serve-head"
-              >
-                WHO WE SERVE ?
-              </Title>
+          <Grid.Col span={{ base: 12, md: 6 }} className="serve-one" >
+            <Stack gap="xl" >
+             
+               
+                  <Title
+                    order={2}
+                    size={32}
+                    fw={600}
+                    c="white"
+                    className="serve-head"
+                  >
+                    WHO WE SERVE ?
+                  </Title>
+               
               <Stack gap="md">
                 <Image
                   src={IMAGE.ICON_SERVE_ONE}

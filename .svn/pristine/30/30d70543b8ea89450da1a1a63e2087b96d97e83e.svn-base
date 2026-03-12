@@ -12,16 +12,8 @@ import {
   Image,
 } from "@mantine/core";
 import { IMAGE } from "../../assets/utils/images";
-import { useEffect } from "react";
 
 export default function HeroSection() {
-  useEffect(() => {
-    const elements = document.querySelectorAll(".scroll-animate");
-
-    elements.forEach((el) => {
-      el.classList.add("active");
-    });
-  }, []);
   return (
     <Box
       className="hero"
@@ -38,12 +30,12 @@ export default function HeroSection() {
                 size={46}
                 c="white"
                 style={{ lineHeight: 1.2 }}
-                className="hero-text scroll-animate"
+                className="hero-text"
               >
                 Reinventing Community
                 <br />
                 <Text
-                  className="hero-text scroll-animate"
+                  className="hero-text"
                   fw={800}
                   component="span"
                   inherit
@@ -100,11 +92,7 @@ export default function HeroSection() {
                   borderRadius: 40,
                 }}
               >
-                <Image
-                  src={IMAGE.MOBILE_IMG}
-                  alt="Mobile UI Preview"
-                  className="scroll-animate"
-                />
+                <Image src={IMAGE.MOBILE_IMG} alt="Mobile UI Preview" />
               </Box>
             </Box>
           </Grid.Col>
