@@ -1,0 +1,71 @@
+export type SlotAvailabilityFormState = {
+  slotDate: string;
+  slotTime: string[];
+  personName: string;
+};
+
+export interface SlotAvailabilityData {
+    id: string;
+    slotDate: string;
+    slotTime: string[];
+    personName: string;
+    status: number;
+}
+
+export interface SlotData {
+  slotDate: string;
+  slotTime: string;
+  personName: string;
+  status: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export type Person = {
+  id: string;
+  name: string;
+};
+
+export type PersonListResponse = {
+  data: {
+    data: Person[];
+  };
+};
+
+// page.tsx
+export interface Slot {
+  slotId: string;
+  slotName: string;
+  status: number;
+}
+
+export interface SlotSchedule {
+  scheduleId: string;
+  slotDate: string;
+  demoBy: string;
+  slots: Slot[];
+}
+
+export interface SlotListResponse {
+  status: number;
+  message: string;
+  data: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    data: SlotSchedule[];
+  };
+}
+
+export interface ApiError {
+  message: string;
+  response?: {
+    data?: {
+      status?: number;
+      message?: string;
+      data?: unknown[];
+    };
+  };
+}

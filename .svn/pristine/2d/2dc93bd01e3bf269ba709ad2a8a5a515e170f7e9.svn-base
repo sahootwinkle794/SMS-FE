@@ -233,7 +233,6 @@ const NewSociety = () => {
       adminEmail: row.adminEmail,
       packageId: row.packageId,
       status: Number(row.status),
-      adminDetails: [],
     });
     setDeleteModalOpen(true);
   };
