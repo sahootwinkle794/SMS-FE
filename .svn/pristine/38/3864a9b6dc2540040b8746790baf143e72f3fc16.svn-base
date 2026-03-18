@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AppBreadcrumbs, AccessRestricted, CustomModal } from "@/components";
+import { AppBreadcrumbs, AccessRestricted } from "@/components";
 import {
     Box,
     Container,
@@ -19,9 +19,8 @@ import {
     Affix,
     Select,
     TextInput,
-    Grid,
 } from "@mantine/core";
-import { DatePickerInput } from "@mantine/dates";
+import { DatePickerInput, TimeInput } from "@mantine/dates";
 import { IconCheck, IconEyePlus, IconRestore, IconX, } from "@tabler/icons-react";
 import { Column, DataTable } from "@/components/DataTable";
 import { RECORDS_PER_PAGE, PageTitles, COMMON_MESSAGE, REQUEST_STATUS_UI, REQUEST_STATUS, RequestStatus, PAGE_TITLE, USER_ROLES } from "@/utils/constants";
@@ -31,9 +30,8 @@ import moment from "moment";
 import { getRequest, postRequest } from "@/service";
 import { API_PATH } from "@/utils/apiPath";
 import { notifications } from "@mantine/notifications";
-import { ScheduleForm, ApiError, GuestUser, GuestUserResponse, DemoRequestFormState, PersonListResponse, SlotResponse } from "@/types/admin/leadManagement/demoRequests/demoRequests";
+import { ScheduleForm, ApiError, GuestUser, GuestUserResponse, DemoRequestFormState, PersonListResponse } from "@/types/admin/leadManagement/demoRequests/demoRequests";
 import DemoRequestModalForm from "./ModalForm";
-import { IMAGES } from "@/utils/images";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const notifyError = (message: string) =>
@@ -94,18 +92,6 @@ const DemoRequests = () => {
     const [personOptions, setPersonOptions] = useState<
         { label: string; value: string }[]
     >([]);
-    const [modalFormError, setModalFormError] = useState<{
-        demoBy?: string;
-        date?: string;
-        slotId?: string;
-    }>({});
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [selectedItem, setSelectedItem] = useState<string | null>(null);
-    const [slotOptions, setSlotOptions] = useState<
-        { label: string; value: string }[]
-    >([]);
-
-
     const updateSchedule = <K extends keyof ScheduleForm>(
         key: K,
         value: ScheduleForm[K]
@@ -128,26 +114,8 @@ const DemoRequests = () => {
     /* ================= HANDLERS ================= */
 
     const handleScheduleConfirm = () => {
-        const newErrors: typeof modalFormError = {};
+        if (!scheduleForm.target) return;
 
-        if (!scheduleForm.demoBy) {
-            newErrors.demoBy = "Demo By is required";
-        }
-
-        if (!scheduleForm.date) {
-            newErrors.date = "Demo Date is required";
-        }
-
-        if (!scheduleForm.slotId) {
-            newErrors.slotId = "Slot is required";
-        }
-
-        setModalFormError(newErrors);
-
-        // ❌ stop if errors
-        if (Object.keys(newErrors).length > 0) return;
-
-        // ✅ success
         setRequests((prev) =>
             prev.map((r) =>
                 r.guest_Id === scheduleForm.target!.guest_Id
@@ -157,27 +125,14 @@ const DemoRequests = () => {
         );
 
         setScheduleForm(SCHEDULE_INITIAL);
-        setModalFormError({});
     };
 
     const handleReject = (id: string) => {
-        setSelectedItem(id);
-        setDeleteModalOpen(true);
-    };
-
-    const handleConfirmReject = () => {
-        if (!selectedItem) return;
-
         setRequests((prev) =>
             prev.map((r) =>
-                r.guest_Id === selectedItem ? { ...r, status: 3 } : r
+                r.guest_Id === id ? { ...r, status: 3 } : r
             )
         );
-
-        setDeleteModalOpen(false);
-        setSelectedItem(null);
-
-        notifySuccess("Request rejected successfully");
     };
 
     /* ================= DATA FETCH (EFFECT) ================= */
@@ -235,7 +190,7 @@ const DemoRequests = () => {
             await fetchPersonOptions();
         };
         fetchData();
-    }, [fetchDemoRequestData, fetchPersonOptions]);
+    }, [fetchDemoRequestData, fetchPersonOptions]); // ✅ add this
 
     /* ================= COLUMNS ================= */
 
@@ -296,7 +251,7 @@ const DemoRequests = () => {
             },
         },
         {
-            header: "Guest Name",
+            header: "Name",
             accessor: "full_Name",
             align: "left",
             render: (value, row) => (
@@ -356,7 +311,7 @@ const DemoRequests = () => {
             render: (value) => (
                 <Stack gap={2}>
                     <Text size="sm">
-                        {value ? moment(value as string).format("DD/MM/YYYY") : "-"}
+                        {value ? moment(value as string).format("DD MMM YYYY") : "-"}
                     </Text>
                     <Text size="xs" c="dimmed">
                         {value ? moment(value as string).format("hh:mm A") : ""}
@@ -398,31 +353,8 @@ const DemoRequests = () => {
         }
     };
 
-    const showAvailableSlots = async (demoBy: string, date: Date) => {
-        try {
-            const payload = {
-                demoBy,
-                date: moment(date).format("DD/MM/YYYY"),
-            };
 
-            const response = await getRequest<SlotResponse>(
-                API_PATH.GET_BOOKED_SLOTS,
-                payload
-            );
 
-            const slots = response?.data?.data || [];
-            console.log("slots", slots)
-            setSlotOptions(
-                slots.map((slot: any) => ({
-                    value: slot.slotId, // ✅ required
-                    label: `${slot.slotName} (${moment(slot.startTime, "HH:mm:ss").format("hh:mm A")} - ${moment(slot.endTime, "HH:mm:ss").format("hh:mm A")})`, // ✅ required
-                }))
-            );
-        } catch (err) {
-            console.error(err);
-            notifyError("Failed to fetch available slots");
-        }
-    };
 
     return (
         <Box>
@@ -449,10 +381,7 @@ const DemoRequests = () => {
             {/* ===== SCHEDULE DEMO MODAL ===== */}
             <Modal
                 opened={!!scheduleForm.target}
-                onClose={() => {
-                    setScheduleForm(SCHEDULE_INITIAL)
-                    setModalFormError({})
-                }}
+                onClose={() => setScheduleForm(SCHEDULE_INITIAL)}
                 title={
                     <Text fw={600} size="md">
                         Schedule Demo — {scheduleForm.target?.full_Name}
@@ -465,91 +394,62 @@ const DemoRequests = () => {
                 }}
                 centered
                 radius="md"
-                size="lg"
+                size="sm"
             >
                 <Stack gap="md">
-                    <Grid>
 
-                        {/* Demo By */}
-                        <Grid.Col span={{ base: 12, sm: 6 }}>
-                            <Select
-                                label="Demo By"
-                                placeholder="Select Demo Person"
-                                data={personOptions}
-                                value={scheduleForm.demoBy}
-                                onChange={(val) => {
-                                    updateSchedule("demoBy", val || "");
-                                    setModalFormError((prev) => ({ ...prev, demoBy: undefined }));
+                    {/* Demo By */}
+                    <Select
+                        label="Demo By"
+                        placeholder="Select Demo Person"
+                        data={personOptions}
+                        value={scheduleForm.demoBy}
+                        onChange={(val) => updateSchedule("demoBy", val || "")}
+                        searchable
+                        nothingFoundMessage="No users found"
+                        required
+                    />
+                    {/* Date */}
+                    <DatePickerInput
+                        label="Demo Date"
+                        placeholder="Pick a date"
+                        value={scheduleForm.date}
+                        onChange={(val) => updateSchedule("date", val as Date | null)}
+                        minDate={new Date()}
+                        required
+                    />
 
-                                    if (val && scheduleForm.date) {
-                                        showAvailableSlots(val, scheduleForm.date);
-                                    }
-                                }}
-                                searchable
-                                nothingFoundMessage="No users found"
-                                error={modalFormError.demoBy}
-                                required
-                            />
-                        </Grid.Col>
+                    {/* Slot instead of time */}
+                    <Select
+                        label="Slot"
+                        placeholder="Select Slot"
+                        data={[
+                            { value: "morning", label: "Morning (10 AM - 12 PM)" },
+                            { value: "afternoon", label: "Afternoon (2 PM - 4 PM)" },
+                            { value: "evening", label: "Evening (6 PM - 8 PM)" },
+                        ]}
+                        value={scheduleForm.slotId}
+                        onChange={(val) => updateSchedule("slotId", val || "")}
+                        required
+                    />
 
-                        {/* Date */}
-                        <Grid.Col span={{ base: 12, sm: 6 }}>
-                            <DatePickerInput
-                                label="Demo Date"
-                                placeholder="Pick a date"
-                                value={scheduleForm.date}
-                                onChange={(val) => {
-                                    const dateValue = val ? new Date(val) : null;
+                    {/* Meeting Link */}
+                    <TextInput
+                        label="Meeting Link"
+                        placeholder="https://meet.google.com/..."
+                        value={scheduleForm.meetingLink}
+                        onChange={(e) => updateSchedule("meetingLink", e.target.value)}
+                    />
 
-                                    updateSchedule("date", dateValue);
-                                    setModalFormError((prev) => ({ ...prev, date: undefined }));
+                    {/* Note */}
+                    <Textarea
+                        label="Note (optional)"
+                        placeholder="Any instructions for the client..."
+                        value={scheduleForm.note}
+                        onChange={(e) => updateSchedule("note", e.target.value)}
+                        rows={3}
+                    />
 
-                                    if (dateValue && scheduleForm.demoBy) {
-                                        showAvailableSlots(scheduleForm.demoBy, dateValue);
-                                    }
-                                }}
-                                minDate={new Date()}
-                                error={modalFormError.date}
-                                required
-                            />
-                        </Grid.Col>
-
-                        {/* Slot instead of time */}
-                        <Grid.Col span={{ base: 12, sm: 12 }}>
-                            <Select
-                                label="Slot"
-                                placeholder="Select Slot"
-                                data={slotOptions}
-                                value={scheduleForm.slotId}
-                                onChange={(val) => {
-                                    updateSchedule("slotId", val || "");
-                                    setModalFormError((prev) => ({ ...prev, slotId: undefined }));
-                                }}
-                                error={modalFormError.slotId}
-                                required
-                            />
-                        </Grid.Col>
-
-                        {/* Meeting Link */}
-                        <Grid.Col span={{ base: 12, sm: 6 }}>
-                            <TextInput
-                                label="Meeting Link"
-                                placeholder="https://meet.google.com/..."
-                                value={scheduleForm.meetingLink}
-                                onChange={(e) => updateSchedule("meetingLink", e.target.value)}
-                            /></Grid.Col>
-
-                        {/* Note */}
-                        <Grid.Col span={{ base: 12, sm: 6 }}>
-                            <Textarea
-                                label="Note (optional)"
-                                placeholder="Any instructions for the client..."
-                                value={scheduleForm.note}
-                                onChange={(e) => updateSchedule("note", e.target.value)}
-                                rows={3}
-                            /></Grid.Col>
-
-                    </Grid>
                     <Group justify="flex-end" mt="xs">
                         <Button
                             variant="outline"
@@ -596,17 +496,6 @@ const DemoRequests = () => {
                 editing={null}
                 onClose={() => setOpened(false)}
                 onSubmit={handleSubmit}
-            />
-            <CustomModal
-                opened={deleteModalOpen}
-                onClose={() => setDeleteModalOpen(false)}
-                icon={IMAGES.WARNING}
-                title="Reject Request"
-                subtext="Are you sure you want to reject this demo request?"
-                actionText="Yes, Reject"
-                onAction={handleConfirmReject}
-                showCancel
-                cancelText="No"
             />
         </Box>
     );

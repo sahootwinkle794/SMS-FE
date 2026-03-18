@@ -69,14 +69,3 @@ export type PersonListResponse = {
     data: Person[];
   };
 };
-
-export type SlotResponse = {
-    data: {
-        data: {
-            slotId: string;
-            slotName: string;
-            startTime: string;
-            endTime: string;
-        }[];
-    };
-};

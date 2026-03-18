@@ -57,5 +57,4 @@ export const API_PATH = {
   POST_SLOT_SCHEDULE: `${NEXT_PUBLIC_API_URL4}/demo-slot-schedule`,
   PATCH_SLOT_SCHEDULE: `${NEXT_PUBLIC_API_URL4}/demo-slot-schedule`,
   DELETE_SLOT_SCHEDULE: `${NEXT_PUBLIC_API_URL4}/demo-slot-schedule`,
-  GET_BOOKED_SLOTS: `${NEXT_PUBLIC_API_URL4}/demo-slot-schedule/booked-slots`,
 };

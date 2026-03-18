@@ -3,17 +3,7 @@
 import { AppBreadcrumbs, CommonCategory } from "@/components";
 import { DrawerForm } from "@/components";
 import { Field } from "@/components/DrawerForm/DrawerForm";
-import {
-  Box,
-  Container,
-  Button,
-  useMantineTheme,
-  Paper,
-  Stack,
-  Skeleton,
-  Text,
-  Center,
-} from "@mantine/core";
+import {Box,Container,Button,useMantineTheme,Paper,SegmentedControl,Stack,Skeleton,Text,Center} from "@mantine/core";
 import { useState, useMemo, useEffect } from "react";
 import { IconPlus, IconX } from "@tabler/icons-react";
 import { RouteConfig } from "@/utils/routeConfig";
@@ -21,24 +11,33 @@ import { COMMON_MESSAGE, STATUS_OPTIONS } from "@/utils/constants";
 import { IconLayersOff } from "@tabler/icons-react";
 import { API_PATH } from "@/utils/apiPath";
 import { getRequest, postRequest } from "@/service";
-import {
-  Amenity,
-  AmenityApiResponse,
-  AmenityCategory,
-  ApiResponse,
-  CatAmenityDetail,
-  CatAmenityMapApiResponse,
-} from "@/types/admin/societyManagement/facandame/amenitiesMapping/amenitiesMapping";
+import {Amenity,AmenityApiResponse,AmenityCategory,AmenityTier,ApiResponse,CatAmenityDetail,CatAmenityMapApiResponse,TierCatApiResponse,TierCategory,} from "@/types/admin/societyManagement/facandame/amenitiesMapping/amenitiesMapping";
 import { notifications } from "@mantine/notifications";
 
 const AmenityMapping = () => {
-  const [drawerOpened, setDrawerOpened] = useState<boolean>(false);
-  const [editMode, setEditMode] = useState<boolean>(false);
-  const [drawerInitialValues, setDrawerInitialValues] = useState<Record<string, any> | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState("");
+  const [drawerOpened, setDrawerOpened] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [drawerInitialValues, setDrawerInitialValues] = useState<
+    Record<string, any> | undefined
+  >(undefined);
+
+  const [amenityTiers, setAmenityTiers] = useState<AmenityTier[]>([]);
   const [amenityCategories, setAmenityCategories] = useState<AmenityCategory[]>([]);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
-  const [categoryAmenityMap, setCategoryAmenityMap] = useState<Record<string, CatAmenityDetail[]>>({});
-  const [loading, setLoading] = useState<boolean>(true);
+  // Cache: tierCode
+  const [tierCategoriesCache, setTierCategoriesCache] = useState<
+    Record<string, TierCategory[]>
+  >({});
+  // Cache: categoryCode
+  const [categoryAmenityMap, setCategoryAmenityMap] = useState<
+    Record<string, CatAmenityDetail[]>
+  >({});
+
+  const [tiersLoading, setTiersLoading] = useState(true);
+  const [tierCategoriesLoading, setTierCategoriesLoading] = useState(false);
+
+  // Tracks amenities removed during edit so they can be sent with status: 2 (deleted) on submit.
   const [removedAmenities, setRemovedAmenities] = useState<
     Array<{ amenityId: string; displayOrder: number; status: number }>
   >([]);
@@ -57,28 +56,52 @@ const AmenityMapping = () => {
 
   // ─── Derived State ───────────────────────────────────────────────────────────
 
-  const currentCategories = useMemo(() => {
-    return amenityCategories
-      .filter((cat: AmenityCategory) => cat.status === 1)
-      .map((cat: AmenityCategory) => {
-        const sorted = (categoryAmenityMap[cat.genCode] ?? [])
-          .slice()
-          .sort((a: CatAmenityDetail, b: CatAmenityDetail) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+  // Build tab options from active tiers only.
+  const tabData = useMemo(() => {
+    return amenityTiers
+      .filter((tier) => tier.status === 1)
+      .map((tier) => ({
+        value: tier.genCode.toLowerCase(),
+        label: tier.genName,
+      }));
+  }, [amenityTiers]);
 
-        return {
-          title: cat.genName || "Untitled Category",
-          amenities: sorted.map((a: CatAmenityDetail) => a.amenityName),
-          amenityStatuses: Object.fromEntries(
-            sorted.map((a: CatAmenityDetail) => [a.amenityName, a.status === 1]),
-          ),
-          amenityDisplayOrders: Object.fromEntries(
-            sorted.map((a: CatAmenityDetail) => [a.amenityName, a.displayOrder]),
-          ),
-          categoryCode: cat.genCode,
-          status: cat.status,
-        };
-      });
-  }, [amenityCategories, categoryAmenityMap]);
+  // Derive the active tier's categories directly from the cache.
+  // No raw `tierCategories` state needed — this always reflects the current tab.
+  const tierCategories = useMemo(
+    () => tierCategoriesCache[activeTab.toUpperCase()] ?? [],
+    [tierCategoriesCache, activeTab],
+  );
+
+  // Build the category card list from tier categories + amenity map.
+  const currentCategories = useMemo(() => {
+    return tierCategories.flatMap((tc) =>
+      tc.categoryDetails
+        .filter((cd) => cd.status === 1)
+        .map((cd) => {
+          const sorted = (categoryAmenityMap[cd.categoryCode] ?? [])
+            .slice()
+            .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+
+          return {
+            title: cd.categoryName || "Untitled Category",
+            description: tc.tierName,
+            amenities: sorted.map((a) => a.amenityName),
+            amenityStatuses: Object.fromEntries(
+              sorted.map((a) => [a.amenityName, a.status === 1]),
+            ),
+            amenityDisplayOrders: Object.fromEntries(
+              sorted.map((a) => [a.amenityName, a.displayOrder]),
+            ),
+            icon: undefined,
+            id: cd.id,
+            categoryCode: cd.categoryCode,
+            tierCode: tc.tierCode,
+            status: cd.status,
+          };
+        }),
+    );
+  }, [tierCategories, categoryAmenityMap]);
 
   // ─── Form Config ─────────────────────────────────────────────────────────────
 
@@ -91,8 +114,8 @@ const AmenityMapping = () => {
       required: true,
       colSpan: 6,
       options: amenityCategories
-        .filter((cat: AmenityCategory) => cat.status === 1)
-        .map((cat: AmenityCategory) => ({
+        .filter((cat) => cat.status === 1)
+        .map((cat) => ({
           value: cat.genCode,
           label: cat.genName,
         })),
@@ -107,7 +130,7 @@ const AmenityMapping = () => {
       colSpan: 3,
       fieldset: "amenityRows",
       dedupSelect: true,
-      options: amenities.map((a: Amenity) => ({
+      options: amenities.map((a) => ({
         value: a.amenityId,
         label: a.amenityName,
       })),
@@ -138,7 +161,7 @@ const AmenityMapping = () => {
     {
       id: "amenityRows",
       legend: "Amenity Items",
-      description: "Add one or more amenities to map under this category.",
+      description: "Add one or more amenities to map under this tier.",
       isMultipleEntry: true,
       multipleEntryKey: "amenityRows",
     },
@@ -146,6 +169,7 @@ const AmenityMapping = () => {
 
   // ─── Event Handlers ──────────────────────────────────────────────────────────
 
+  // Track removed rows so they're included in the PUT payload with status: 2.
   const handleRemoveEntry = (
     _fieldsetId: string,
     _index: number,
@@ -157,7 +181,7 @@ const AmenityMapping = () => {
     setRemovedAmenities((prev) => [
       ...prev,
       {
-        amenityId: entryValues.amenityId as string,
+        amenityId: entryValues.amenityId,
         displayOrder: Number(entryValues.displayOrder) || 0,
         status: 2,
       },
@@ -166,14 +190,14 @@ const AmenityMapping = () => {
 
   const handleFormSubmit = async (formData: Record<string, any>) => {
     try {
-      const amenityRows = (formData.amenityRows ?? []) as Array<{
+      const amenityRows: {
         amenityId: string;
         displayOrder: string;
         amenityStatus: string;
-      }>;
+      }[] = formData.amenityRows || [];
 
       const payload = {
-        categoryCode: formData.categoryCode as string,
+        categoryCode: formData.categoryCode,
         amenityDetails: [
           ...amenityRows.map((row) => ({
             amenityId: row.amenityId,
@@ -194,7 +218,7 @@ const AmenityMapping = () => {
         color: "green",
       });
 
-      await fetchAllCategoryAmenityMap(amenities);
+      await refreshCategoryAmenityMap(formData.categoryCode, amenities);
       setRemovedAmenities([]);
     } catch (error) {
       notifyError(COMMON_MESSAGE.AMENITY_MAPPING_FAIL);
@@ -207,28 +231,33 @@ const AmenityMapping = () => {
     setDrawerInitialValues(undefined);
   };
 
-  const handleEdit = (category: (typeof currentCategories)[number]) => {
+  const handleEdit = async (category: any, tabValue: string) => {
     setEditMode(true);
 
-    const details = (categoryAmenityMap[category.categoryCode] ?? [])
-      .slice()
-      .sort(
-        (a: CatAmenityDetail, b: CatAmenityDetail) =>
-          (a.displayOrder || 999) - (b.displayOrder || 999),
-      );
+    const details = await fetchAmenityDetailsForCategory(
+      category.categoryCode,
+      amenities,
+    );
+
+    setCategoryAmenityMap((prev) => ({
+      ...prev,
+      [category.categoryCode]: details,
+    }));
 
     const amenityRows =
       details.length > 0
-        ? details.map((a: CatAmenityDetail) => ({
-            amenityId: a.amenityId,
-            displayOrder: String(a.displayOrder),
-            amenityStatus: a.status === 1 ? "1" : "0",
-            isExisting: true,
-          }))
+        ? details
+            .sort((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999))
+            .map((a) => ({
+              amenityId: a.amenityId,
+              displayOrder: String(a.displayOrder),
+              amenityStatus: a.status === 1 ? "1" : "0",
+              isExisting: true,
+            }))
         : [{ amenityId: "", displayOrder: "", amenityStatus: "1" }];
 
     setDrawerInitialValues({
-      categoryCode: category.categoryCode ?? "",
+      categoryCode: category.categoryCode || "",
       status: category.status === 0 ? "0" : "1",
       amenityRows,
     });
@@ -251,21 +280,26 @@ const AmenityMapping = () => {
 
   // ─── API Calls ───────────────────────────────────────────────────────────────
 
-  const fetchAllCategoryAmenityMap = async (amenitiesList: Amenity[]) => {
+  const fetchAmenityDetailsForCategory = async (
+    categoryCode: string,
+    amenitiesList: Amenity[],
+  ): Promise<CatAmenityDetail[]> => {
     try {
       const res = (await getRequest(
-        API_PATH.CATEGORY_AMENITY_MAPPING,
+        `${API_PATH.CATEGORY_AMENITY_MAPPING}?CategoryCode=${categoryCode}`,
       )) as CatAmenityMapApiResponse;
 
-      const items = res?.data?.data ?? [];
-      const map: Record<string, CatAmenityDetail[]> = {};
+      const items = res?.data?.data || [];
 
-      items.forEach((item) => {
-        map[item.categoryCode] = item.amenityDetails
-          .filter((a) => (a.status === 1 || a.status === 0) && a.isAmenityActive === 1)
+      return items.flatMap((item) =>
+        item.amenityDetails
+          .filter(
+            (a) =>
+              (a.status === 1 || a.status === 0) && a.isAmenityActive === 1,
+          )
           .map((a) => {
             const matched = amenitiesList.find(
-              (am: Amenity) => am.amenityCode === a.amenityCode,
+              (am) => am.amenityCode === a.amenityCode,
             );
             return {
               amenityId: matched?.amenityId ?? "",
@@ -273,22 +307,104 @@ const AmenityMapping = () => {
               displayOrder: a.displayOrder,
               status: a.status,
             };
-          });
-      });
+          }),
+      );
+    } catch (error) {
+      console.error(COMMON_MESSAGE.AMENITY_FETCH_FAIL, error);
+      return [];
+    }
+  };
 
-      setCategoryAmenityMap(map);
+  // Fetches and caches amenity details for a category.
+  const getCategoryAmenityMap = async (
+    categoryCode: string,
+    amenitiesList: Amenity[] = amenities,
+  ) => {
+    // Skip if already cached
+    if (categoryAmenityMap[categoryCode]) return;
+
+    try {
+      const details = await fetchAmenityDetailsForCategory(
+        categoryCode,
+        amenitiesList,
+      );
+      setCategoryAmenityMap((prev) => ({ ...prev, [categoryCode]: details }));
     } catch (error) {
       notifyError(COMMON_MESSAGE.DATA_FETCH_FAIL);
       console.error(COMMON_MESSAGE.DATA_FETCH_FAIL, error);
     }
   };
 
-  const getAmenities = async (): Promise<Amenity[]> => {
+  /**
+   * Force re-fetches a category's amenity details and updates the cache.
+   * Used after a successful form submit to reflect the latest data.
+   */
+  const refreshCategoryAmenityMap = async (
+    categoryCode: string,
+    amenitiesList: Amenity[] = amenities,
+  ) => {
+    try {
+      const details = await fetchAmenityDetailsForCategory(categoryCode, amenitiesList);
+      setCategoryAmenityMap((prev) => ({ ...prev, [categoryCode]: details }));
+    } catch (error) {
+      notifyError(COMMON_MESSAGE.DATA_FETCH_FAIL);
+      console.error(COMMON_MESSAGE.DATA_FETCH_FAIL, error);
+    }
+  };
+
+  /**
+   * Fetches tier→category mapping for the given tierCode.
+   * Returns the cached result immediately if already fetched — prevents
+   * redundant API calls on every tab switch.
+   */
+  const getTierCategories = async (tierCode: string) => {
+    // Return cached data immediately without hitting the API again.
+    if (tierCategoriesCache[tierCode]) return tierCategoriesCache[tierCode];
+
+    setTierCategoriesLoading(true);
+    try {
+      const res = (await getRequest(
+        `${API_PATH.GET_TIER_CAT_MAPPING}`,
+      )) as TierCatApiResponse;
+      const data: TierCategory[] = res?.data?.data || [];
+
+      // Store under tierCode key so subsequent visits are instant.
+      setTierCategoriesCache((prev) => ({ ...prev, [tierCode]: data }));
+      return data;
+    } catch (error) {
+      notifyError(COMMON_MESSAGE.DATA_FETCH_FAIL);
+      console.error("Error fetching tier categories:", error);
+      return [];
+    } finally {
+      setTierCategoriesLoading(false);
+    }
+  };
+
+  const handleTierFetch = async () => {
+    setTiersLoading(true);
+    try {
+      const res = (await getRequest(
+        `${API_PATH.GET_GEN_CODE}?groupCode=AMENITY_TIER`,
+      )) as ApiResponse<AmenityTier>;
+      const tiers: AmenityTier[] = res?.data?.data ?? [];
+      setAmenityTiers(tiers);
+      
+      const firstActive = tiers.find((t) => t.status === 1);
+      if (firstActive) {
+        setActiveTab(firstActive.genCode.toLowerCase());
+      }
+    } catch (error) {
+      notifyError(COMMON_MESSAGE.DATA_FETCH_FAIL);
+      console.error("Error fetching tier data:", error);
+    } finally {
+      setTiersLoading(false);
+    }
+  };
+
+  const getAmenities = async () => {
     try {
       const res = (await getRequest(API_PATH.GET_AMENITY)) as AmenityApiResponse;
-      const data: Amenity[] = (res?.data?.data ?? []).filter(
-        (a: Amenity) => a.status === 1,
-      );
+      const data: Amenity[] = (res?.data?.data || []).filter((a) => a.status === 1);
       setAmenities(data);
       return data;
     } catch (error) {
@@ -298,39 +414,56 @@ const AmenityMapping = () => {
     }
   };
 
-  const handleCategoryFetch = async (): Promise<AmenityCategory[]> => {
+  const handleCategoryFetch = async () => {
     try {
       const res = (await getRequest(
         `${API_PATH.GET_GEN_CODE}?groupCode=AMENITY_CATEGORY`,
       )) as ApiResponse<AmenityCategory>;
       const categories: AmenityCategory[] = res?.data?.data ?? [];
       setAmenityCategories(categories);
-      return categories;
     } catch (error) {
       notifyError(COMMON_MESSAGE.DATA_FETCH_FAIL);
       console.error("Error fetching amenity categories:", error);
-      return [];
     }
   };
 
   // ─── Effects ─────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    const init = async () => {
-      setLoading(true);
-      try {
-        const [, amenitiesList] = await Promise.all([
-          handleCategoryFetch(),
-          getAmenities(),
-        ]);
-        await fetchAllCategoryAmenityMap(amenitiesList);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    init();
+    handleTierFetch();
+    handleCategoryFetch();
+    getAmenities();
   }, []);
+
+  useEffect(() => {
+    if (!activeTab) return;
+    getTierCategories(activeTab.toUpperCase());
+  }, [activeTab]);
+
+  // When tier categories load for a tab, fetch amenity details for any
+  // uncached categories in parallel (Promise.all) instead of sequentially.
+  useEffect(() => {
+    if (!tierCategories.length) return;
+
+    const uniqueCategoryCodes = [
+      ...new Set(
+        tierCategories.flatMap((tc) =>
+          tc.categoryDetails
+            .filter((cd) => cd.status === 1)
+            .map((cd) => cd.categoryCode),
+        ),
+      ),
+    ];
+
+    // Only fetch categories not already in the cache.
+    const uncachedCodes = uniqueCategoryCodes.filter(
+      (code) => !categoryAmenityMap[code],
+    );
+
+    if (uncachedCodes.length > 0) {
+      Promise.all(uncachedCodes.map((code) => getCategoryAmenityMap(code, amenities)));
+    }
+  }, [tierCategories]);
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
@@ -347,9 +480,32 @@ const AmenityMapping = () => {
         ]}
       />
       <Container size="xl" pt="md">
+        {/* Tab Navigation */}
+        {/* <Paper
+          radius="lg"
+          p="md"
+          mb="lg"
+          bg="white"
+          shadow="md"
+          bd={`1px solid ${theme.colors.primary[1]}`}
+        >
+          <SegmentedControl
+            value={activeTab}
+            onChange={setActiveTab}
+            data={tabData}
+            fullWidth
+            radius="md"
+            size="md"
+            color="primary.5"
+            bd={`1px solid ${theme.colors.primary[1]}`}
+            disabled={tiersLoading}
+          />
+        </Paper> */}
+
+        {/* Category Cards */}
         <Box>
           <Stack gap="lg">
-            {loading ? (
+            {tierCategoriesLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} height={120} radius="lg" />
               ))
@@ -372,8 +528,8 @@ const AmenityMapping = () => {
                       No Categories Mapped
                     </Text>
                     <Text size="sm" c="gray.4" ta="center" maw={340}>
-                      There are no amenity categories mapped yet. Click{" "}
-                      <strong>Map Amenities</strong> to get started.
+                      There are no amenity categories mapped to this tier yet.
+                      Click <strong>Map Amenities</strong> to get started.
                     </Text>
                   </Stack>
                 </Center>
@@ -381,11 +537,12 @@ const AmenityMapping = () => {
             ) : (
               currentCategories.map((category, index) => (
                 <CommonCategory
-                  key={`${category.categoryCode}-${index}`}
+                  key={`${activeTab}-${category.categoryCode}-${index}`}
                   title={category.title}
+                  description={category.description}
                   amenities={category.amenities}
                   amenityStatuses={category.amenityStatuses}
-                  onEdit={() => handleEdit(category)}
+                  onEdit={() => handleEdit(category, activeTab)}
                   isChecked={category.status === 1}
                   amenityDisplayOrders={category.amenityDisplayOrders}
                 />
@@ -394,6 +551,7 @@ const AmenityMapping = () => {
           </Stack>
         </Box>
 
+        {/* Floating Action Button */}
         <Button
           leftSection={<IconPlus size={20} />}
           radius="xl"
@@ -411,6 +569,7 @@ const AmenityMapping = () => {
           Map Amenities
         </Button>
 
+        {/* Drawer Form */}
         <DrawerForm
           opened={drawerOpened}
           onClose={handleCloseDrawer}

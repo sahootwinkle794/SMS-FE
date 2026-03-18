@@ -16,7 +16,6 @@ import { ApiError, Slot, SlotListResponse } from "@/types/admin/leadManagement/s
 import { getRequest, postRequest } from "@/service";
 import { API_PATH } from "@/utils/apiPath";
 import { COMMON_MESSAGE, USER_ROLES } from "@/utils/constants";
-import moment from "moment";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -130,12 +129,10 @@ const SlotAvailabilityModalForm = ({ opened, onClose, onSubmit, onEdit }: SlotAv
             const slots = response?.data?.data || [];
             setSlotData(slots);
             setSlotOptions(
-                slots
-                    .filter((slot: Slot) => slot.status === 1)
-                    .map((slot: Slot) => ({
-                        label: `${slot.slot_Name} (${moment(slot.start_Time, "HH:mm:ss").format("hh:mm A")} - ${moment(slot.end_Time, "HH:mm:ss").format("hh:mm A")})`,
-                        value: slot.slot_Id,
-                    }))
+                slots.map((slot: Slot) => ({
+                    label: `${slot.slot_Name} (${slot.start_Time} - ${slot.end_Time})`,
+                    value: slot.slot_Id,
+                }))
             );
         } catch (err) {
             console.error(err);

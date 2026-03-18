@@ -261,7 +261,6 @@ export const COMMON_MESSAGE = {
   PACKAGE_UPDATE_FAILED: "Failed to update package",
   PACKAGE_UPDATED: "Package updated successfully",
   PACKAGE_ADDED: "Package added successfully",
-  PACKAGE_ADDED_FAIL:"Failed to add package",
 
   CATEGORY_SERVICE_MAPPING_ADDED: "Service mapping created successfully",
   CATEGORY_SERVICE_MAPPING_UPDATED: "Service mapping updated successfully",
