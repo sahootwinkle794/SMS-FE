@@ -1,0 +1,1 @@
+export {ParkingSlotAllotment} from './ParkingSlotAllotment'

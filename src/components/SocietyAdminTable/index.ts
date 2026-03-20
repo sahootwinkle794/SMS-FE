@@ -1,0 +1,1 @@
+export {SocietyAdminTable} from './SocietyAdminTable'

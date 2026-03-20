@@ -285,8 +285,6 @@ export const COMMON_MESSAGE = {
   SLOT_SCHEDULE__DELETE_FAIL:"Failed to delete slot schedule details",
   SLOT_SCHEDULE__UPDATED_SUCCESS:"Slot Scheduled updated successfully",
 
-  PARKING_SLOT_RELEASE_FAILED: "Failed to release slot. Please try again.",
-
   CATEGORY_FETCH_FAIL:"Category fetch failed",
   CATEGORY_UPDATE_SUCCESS:"Category updated successfully",
   CATEGORY_CREATE_SUCCESS:"Category created successfully",

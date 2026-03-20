@@ -1,0 +1,177 @@
+"use client";
+
+import { STATUS_OPTIONS } from "@/utils/constants";
+import {
+    Modal,
+    TextInput,
+    Button,
+    Group,
+    Stack,
+    Select,
+    useMantineTheme,
+    Textarea,
+} from "@mantine/core";
+import { useEffect, useState } from "react";
+import {
+    SubCategory,
+    SubCategoryFormState,
+} from "@/types/admin/complaintMaster/subCategorySetup/subCategorySetup";
+
+type Props = {
+    opened: boolean;
+    onClose: () => void;
+    onSubmit: (data: SubCategoryFormState) => void;
+    onEdit?: SubCategory | null;
+    categoryOptions: { value: string; label: string }[];
+};
+
+const EMPTY_FORM: SubCategoryFormState = {
+    categoryCode: "",
+    subCategoryName: "",
+    description: "",
+    status: "",
+};
+
+const FIELD_LABELS: Record<keyof SubCategoryFormState, string> = {
+    categoryCode: "Category",
+    subCategoryName: "Sub Category Name",
+    description: "Description",
+    status: "Status",
+};
+
+type FormErrors = Partial<Record<keyof SubCategoryFormState, string>>;
+
+const SubCategoryModalForm = ({
+    opened,
+    onClose,
+    onSubmit,
+    onEdit,
+    categoryOptions,
+}: Props) => {
+    const theme = useMantineTheme();
+    const [form, setForm] = useState<SubCategoryFormState>(EMPTY_FORM);
+    const [errors, setErrors] = useState<FormErrors>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Validate all fields in one pass
+    const REQUIRED_FIELDS: (keyof SubCategoryFormState)[] = ["categoryCode", "subCategoryName"];
+    const validate = (f: SubCategoryFormState): FormErrors =>
+        Object.fromEntries(
+            REQUIRED_FIELDS
+                .filter((k) => !f[k]?.trim())
+                .map((k) => [k, `${FIELD_LABELS[k]} is required`])
+        );
+
+    const handleChange = (key: keyof SubCategoryFormState, value: string) => {
+        setForm((prev) => ({ ...prev, [key]: value }));
+        setErrors((prev) => ({ ...prev, [key]: "" }));
+    };
+
+    const handleSubmit = async () => {
+        const newErrors = validate(form);
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+        try {
+            setIsSubmitting(true);
+            await onSubmit(form);
+            setForm(EMPTY_FORM);
+            setErrors({});
+        } catch (error) {
+            console.error("Error submitting sub category:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!opened) return;
+        setForm(
+            onEdit
+                ? {
+                    categoryCode: onEdit.categoryCode || "",
+                    subCategoryName: onEdit.subCategoryName || "",
+                    description: onEdit.description || "",
+                    status: String(onEdit.status ?? ""),
+                }
+                : EMPTY_FORM,
+        );
+        setErrors({});
+    }, [opened, onEdit]);
+
+    return (
+        <Modal
+            opened={opened}
+            onClose={onClose}
+            title={onEdit ? "Edit Sub Category" : "Add Sub Category"}
+            size="lg"
+            styles={{
+                header: {
+                    backgroundColor: theme.colors.primary[5],
+                    color: "white",
+                    padding: "16px 20px",
+                    margin: "-1px -1px 16px -1px",
+                },
+                title: { color: "white", fontWeight: 600 },
+                close: { color: "white" },
+            }}
+        >
+            <Stack>
+                <Select
+                    label="Category"
+                    placeholder="Select category"
+                    data={categoryOptions}
+                    value={form.categoryCode}
+                    error={errors.categoryCode}
+                    disabled={!!onEdit}
+                    required
+                    onChange={(value) => handleChange("categoryCode", value || "")}
+                />
+
+                <TextInput
+                    label="Sub Category Name"
+                    placeholder="Enter sub category name"
+                    value={form.subCategoryName}
+                    error={errors.subCategoryName}
+                    required
+                    onChange={(e) => handleChange("subCategoryName", e.target.value)}
+                />
+
+                <Textarea
+                    label="Description"
+                    placeholder="Enter description"
+                    value={form.description}
+                    error={errors.description}
+                    autosize
+                    minRows={3}
+                    onChange={(e) => handleChange("description", e.target.value)}
+                />
+
+                <Select
+                    label="Status"
+                    placeholder="Select status"
+                    value={form.status}
+                    data={STATUS_OPTIONS}
+                    error={errors.status}
+                    onChange={(value) => handleChange("status", value || "")}
+                />
+
+                <Group justify="flex-end" mt="md">
+                    <Button variant="outline" onClick={onClose} color="primary.5">
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        loading={isSubmitting}
+                        color="primary.5"
+                    >
+                        {onEdit ? "Update Sub Category" : "Save Sub Category"}
+                    </Button>
+                </Group>
+            </Stack>
+        </Modal>
+    );
+};
+
+export default SubCategoryModalForm;

@@ -1,0 +1,81 @@
+"use client";
+
+import { useState } from "react";
+import { notifications } from "@mantine/notifications";
+import { ParkingSlotAllotment } from "@/components/ParkingSlotAllotment/ParkingSlotAllotment";
+import { AllotFormValues, ParkingBlock } from "@/components/ParkingSlotAllotment/ParkingSlotAllotment.types";
+import { STATIC_PARKING_BLOCKS } from "@/mock/ParkingSlotAllotment.data";
+
+const ParkingSlotAllotmentPage = () => {
+  // Clone static data into state so allot/release updates reflect immediately
+  const [blocks, setBlocks] = useState<ParkingBlock[]>(STATIC_PARKING_BLOCKS);
+
+  const notifySuccess = (msg: string) =>
+    notifications.show({ title: "Success", message: msg, color: "teal" });
+  const notifyError = (msg: string) =>
+    notifications.show({ title: "Error", message: msg, color: "red" });
+
+  const handleAllot = async (slotId: string, values: AllotFormValues) => {
+    try {
+      // TODO: await postRequest(API_PATH.PARKING_ALLOT, { slotId, ...values });
+
+      // Optimistic update
+      setBlocks((prev) =>
+        prev.map((block) => ({
+          ...block,
+          slots: block.slots.map((slot) =>
+            slot.slotId === slotId
+              ? {
+                  ...slot,
+                  status: "occupied" as const,
+                  resident: {
+                    residentId: Date.now().toString(),
+                    name: values.residentName,
+                    flatNumber: values.flatNumber,
+                    phone: values.phone,
+                    vehicleNumber: values.vehicleNumber,
+                    vehicleType: values.vehicleType as "2-wheeler" | "4-wheeler",
+                    allottedDate: new Date().toISOString().split("T")[0],
+                  },
+                }
+              : slot
+          ),
+        }))
+      );
+      notifySuccess(`Slot ${slotId} allotted to ${values.residentName}.`);
+    } catch {
+      notifyError("Failed to allot slot. Please try again.");
+    }
+  };
+
+  const handleRelease = async (slotId: string) => {
+    try {
+      // TODO: await postRequest(API_PATH.PARKING_RELEASE, { slotId });
+
+      // Optimistic update
+      setBlocks((prev) =>
+        prev.map((block) => ({
+          ...block,
+          slots: block.slots.map((slot) =>
+            slot.slotId === slotId
+              ? { ...slot, status: "available" as const, resident: undefined }
+              : slot
+          ),
+        }))
+      );
+      notifySuccess(`Slot ${slotId} has been released.`);
+    } catch {
+      notifyError("Failed to release slot. Please try again.");
+    }
+  };
+
+  return (
+    <ParkingSlotAllotment
+      blocks={blocks}
+      onAllot={handleAllot}
+      onRelease={handleRelease}
+    />
+  );
+};
+
+export default ParkingSlotAllotmentPage;

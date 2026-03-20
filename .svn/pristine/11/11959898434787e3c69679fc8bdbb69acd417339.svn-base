@@ -1,0 +1,1 @@
+export {VehicleRegistration} from "./VehicleRegistration";

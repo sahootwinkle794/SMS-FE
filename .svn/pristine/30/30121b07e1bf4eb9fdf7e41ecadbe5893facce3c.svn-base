@@ -21,5 +21,3 @@ export {UpcomingEvents} from "./UpcomingEvents";
 export {SocietyInfoDrawer} from "./SocietyInfoDrawer";
 export { SocietyAmenityMap } from "./SocietyAmenityMap";
 export { ParkingSlotAllotment } from "./ParkingSlotAllotment";
-export { VehicleRegistration } from "./VehicleRegistration";
-export { GuestVehicleTracking } from "./GuestVehicleTracking";

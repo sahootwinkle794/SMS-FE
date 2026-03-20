@@ -1,0 +1,1 @@
+export {ResidentManagement} from "./ResidentManagement";

@@ -1,0 +1,158 @@
+"use client";
+
+import { STATUS_OPTIONS } from "@/utils/constants";
+import {
+    Modal,
+    TextInput,
+    Button,
+    Group,
+    Stack,
+    Select,
+    useMantineTheme,
+    Textarea,
+} from "@mantine/core";
+import { useEffect, useState } from "react";
+import {
+    Category,
+    CategoryFormState,
+} from "@/types/admin/complaintMaster/categorySetup/categorySetup";
+
+type Props = {
+    opened: boolean;
+    onClose: () => void;
+    onSubmit: (data: CategoryFormState) => void;
+    onEdit?: Category | null;
+};
+
+const EMPTY_FORM: CategoryFormState = {
+    categoryName: "",
+};
+
+const FIELD_LABELS: Record<keyof CategoryFormState, string> = {
+    categoryName: "Category Name",
+    description: "Description",
+    status: "Status",
+};
+
+type FormErrors = Partial<Record<keyof CategoryFormState, string>>;
+
+const CategoryModalForm = ({ opened, onClose, onSubmit, onEdit }: Props) => {
+    const theme = useMantineTheme();
+    const [form, setForm] = useState<CategoryFormState>(EMPTY_FORM);
+    const [errors, setErrors] = useState<FormErrors>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Validate all fields in one pass
+    const REQUIRED_FIELDS: (keyof CategoryFormState)[] = ["categoryName"];
+
+    const validate = (f: CategoryFormState): FormErrors =>
+        Object.fromEntries(
+            REQUIRED_FIELDS
+                .filter((k) => !f[k]?.trim())
+                .map((k) => [k, `${FIELD_LABELS[k]} is required`])
+        );
+
+    const handleChange = (key: keyof CategoryFormState, value: string) => {
+        setForm((prev) => ({ ...prev, [key]: value }));
+        setErrors((prev) => ({ ...prev, [key]: "" }));
+    };
+
+    const handleSubmit = async () => {
+        const newErrors = validate(form);
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+        try {
+            setIsSubmitting(true);
+            await onSubmit(form);
+            setForm(EMPTY_FORM);
+            setErrors({});
+        } catch (error) {
+            console.error("Error submitting category:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!opened) return;
+        setForm(
+            onEdit
+                ? {
+
+                    categoryName: onEdit.categoryName || "",
+                    description: onEdit.description || "",
+                    status: String(onEdit.status ?? ""),
+                }
+                : EMPTY_FORM,
+        );
+        setErrors({});
+    }, [opened, onEdit]);
+
+    return (
+        <Modal
+            opened={opened}
+            onClose={onClose}
+            title={onEdit ? "Edit Category" : "Add Category"}
+            size="lg"
+            styles={{
+                header: {
+                    backgroundColor: theme.colors.primary[5],
+                    color: "white",
+                    padding: "16px 20px",
+                    margin: "-1px -1px 16px -1px",
+                },
+                title: { color: "white", fontWeight: 600 },
+                close: { color: "white" },
+            }}
+        >
+            <Stack>
+
+
+                <TextInput
+                    label="Category Name"
+                    placeholder="Enter category name"
+                    value={form.categoryName}
+                    error={errors.categoryName}
+                    required
+                    onChange={(e) => handleChange("categoryName", e.target.value)}
+                />
+
+                <Textarea
+                    label="Description"
+                    placeholder="Enter description"
+                    value={form.description}
+                    error={errors.description}
+                    autosize
+                    minRows={3}
+                    onChange={(e) => handleChange("description", e.target.value)}
+                />
+
+                <Select
+                    label="Status"
+                    placeholder="Select status"
+                    value={form.status}
+                    data={STATUS_OPTIONS}
+                    error={errors.status}
+                    onChange={(value) => handleChange("status", value || "")}
+                />
+
+                <Group justify="flex-end" mt="md">
+                    <Button variant="outline" onClick={onClose} color="primary.5">
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        loading={isSubmitting}
+                        color="primary.5"
+                    >
+                        {onEdit ? "Update Category" : "Save Category"}
+                    </Button>
+                </Group>
+            </Stack>
+        </Modal>
+    );
+};
+
+export default CategoryModalForm;
