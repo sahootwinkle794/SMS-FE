@@ -1,0 +1,97 @@
+export type SlotAvailabilityFormState = {
+  slotDate: string;
+  slotTime: string[];
+  demoBy: string;
+};
+
+export interface SlotAvailabilityData {
+    id: string;
+    slotDate: string;
+    slotTime: string[];
+    demoBy: string;
+    status: number;
+    scheduleId?:string;
+}
+
+export interface SlotData {
+  slotDate: string;
+  slotTime: string;
+  demoBy: string;
+  status: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export type Person = {
+  id: string;
+  name: string;
+};
+
+export type PersonListResponse = {
+  data: {
+    data: Person[];
+  };
+};
+
+// page.tsx
+interface Slot {
+    scheduleId?: string;   // ← make it optional
+    slotName: string;
+    status?: number;
+    [key: string]: any;    // ← allows any extra keys
+}
+export interface SlotSchedule {
+  scheduleId: string;
+  slotDate: string;
+  demoBy: string;
+  slots: Slot[];
+}
+
+export interface SlotListResponse {
+  status: number;
+  message: string;
+  data: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    data: SlotSchedule[];
+  };
+}
+
+export interface ApiError {
+  message: string;
+  response?: {
+    data?: {
+      status?: number;
+      message?: string;
+      data?: unknown[];
+    };
+  };
+}
+
+
+export type SlotPayload = {
+    demoBy: string;
+    slotDate: string;
+    slots: {
+        slotId: string;
+        slotName: string;
+        status?: number;
+    }[];
+    status: number;
+};
+
+export interface ApiResponse<T> {
+    status: number;
+    message: string;
+    data: T;
+}
+
+
+export type FormErrors = {
+    slotDate?: string;
+    demoBy?: string;
+    slotTime?: string;
+};

@@ -1,0 +1,261 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { Button, Group, Text, Badge, Tooltip, ActionIcon, Affix } from "@mantine/core";
+import { IconEyePlus, IconEdit, IconTrash } from "@tabler/icons-react";
+import moment from "moment";
+import { notifications } from "@mantine/notifications";
+
+import { DataTable, Column } from "@/components/DataTable";
+import { AppBreadcrumbs, CustomModal } from "@/components";
+import SlotAvailabilityModalForm from "./ModalForm";
+import {
+    SlotAvailabilityData,
+    SlotListResponse,
+    SlotPayload,
+    ApiError,
+    ApiResponse,
+} from "@/types/admin/leadManagement/slotAvailability/slotAvailability";
+import { deleteRequest, getRequest, patchRequest, postRequest } from "@/service";
+import { COMMON_MESSAGE, PAGE_TITLE, RECORD_PER_PAGE, RECORDS_PER_PAGE, STATUS_CODE } from "@/utils/constants";
+import { API_PATH } from "@/utils/apiPath";
+import { IMAGES } from "@/utils/images";
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+const notifyError = (message: string) =>
+    notifications.show({ title: "Error", message, color: "red" });
+
+const notifySuccess = (message: string) =>
+    notifications.show({ title: "Successful!", message, color: "green" });
+
+// ─── Component ──────────────────────────────────────────────────────────────
+
+const SlotAvailability = () => {
+    const [data, setData] = useState<SlotAvailabilityData[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [opened, setOpened] = useState(false);
+    const [editing, setEditing] = useState<SlotAvailabilityData | null>(null);
+    const [totalRecords, setTotalRecords] = useState(0);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<string | null>(null);
+
+    // ─── Fetch ───────────────────────────────────────────────────────────────
+
+    const fetchDemoRequestData = useCallback(async () => {
+        try {
+            setLoading(true);
+
+            const response = await getRequest<SlotListResponse>(API_PATH.GET_SLOT_SCHEDULE, {
+                search: "",
+                page: currentPage,
+                limit: RECORD_PER_PAGE,
+                sortBy: "created_at",
+                sortOrder: "DESC",
+            });
+
+            const apiData = response?.data?.data || [];
+
+            setData(
+                apiData.map((item) => ({
+                    id: item.slots?.[0]?.scheduleId ?? "",  // ← fallback to empty string
+                    slotDate: item.slotDate,
+                    slotTime: item.slots.map((slot) => slot.slotName),
+                    demoBy: item.demoBy,
+                    status: item.slots?.[0]?.status ?? 0,
+                }))
+            );
+            setTotalRecords(response?.data?.total ?? 0);
+        } catch (err) {
+            console.error(err);
+            notifyError((err as ApiError)?.message || COMMON_MESSAGE.SLOT_SETUP_FETCH_FAIL);
+        } finally {
+            setLoading(false);
+        }
+    }, [currentPage]);
+
+    useEffect(() => {
+        fetchDemoRequestData();
+    }, [fetchDemoRequestData]);
+
+    // ─── Handlers ────────────────────────────────────────────────────────────
+
+    const handleEdit = (row: SlotAvailabilityData) => {
+        console.log("row", row)
+        setEditing(row);
+        setOpened(true);
+    };
+
+    const handleDelete = (row: SlotAvailabilityData) => {
+        setSelectedItem(row?.id);
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!selectedItem) return;
+        try {
+            await deleteRequest(`${API_PATH.DELETE_SLOT_SCHEDULE}/${selectedItem}`);
+            notifySuccess(COMMON_MESSAGE.SLOT_SCHEDULE_DELETED_SUCCESS);
+            setDeleteModalOpen(false);
+            setSelectedItem(null);
+            fetchDemoRequestData();
+        } catch {
+            notifyError(COMMON_MESSAGE.SLOT_SCHEDULE__DELETE_FAIL);
+        }
+    };
+
+    const handleSubmit = async (payload: SlotPayload) => {
+        try {
+            setLoading(true);
+            console.log("editing", editing)
+            if (editing) {
+                await patchRequest(`${API_PATH.PATCH_SLOT_SCHEDULE}/${editing.id}`, payload);
+                notifySuccess(COMMON_MESSAGE.SLOT_SCHEDULE__UPDATED_SUCCESS);
+            } else {
+                await postRequest(API_PATH.POST_SLOT_SCHEDULE, payload);
+                notifySuccess(COMMON_MESSAGE.SLOT_SCHEDULE_SETUP_CREATED);
+            }
+
+            setOpened(false);
+            setEditing(null);
+            fetchDemoRequestData();
+        } catch (err) {
+            const errorResponse = err as ApiResponse<SlotPayload>;
+
+            if (errorResponse?.status === STATUS_CODE.DUPLICATE_ENTRY) {
+                notifyError("Slot already scheduled. Please choose another date.");
+                return;
+            }
+
+            notifyError(errorResponse?.message || COMMON_MESSAGE.SLOT_SCHEDULE_SETUP_FAILED);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleModalClose = () => {
+        setOpened(false);
+        setEditing(null);
+    };
+
+    const handleAddNew = () => {
+        setEditing(null);
+        setOpened(true);
+    };
+
+    // ─── Columns ─────────────────────────────────────────────────────────────
+
+    const columns: Column<SlotAvailabilityData>[] = [
+        {
+            header: "S.No",
+            width: "8%",
+            align: "center",
+            render: (_value, _row, index) => (currentPage - 1) * RECORDS_PER_PAGE + index + 1,
+        },
+        {
+            header: "Actions",
+            width: "12%",
+            render: (_value, row) => (
+                <Group gap="xs">
+                    <Tooltip label="Edit">
+                        <ActionIcon color="blue" variant="light" onClick={() => handleEdit(row)}>
+                            <IconEdit size={16} />
+                        </ActionIcon>
+                    </Tooltip>
+                    <Tooltip label="Delete">
+                        <ActionIcon color="red" variant="light" onClick={() => handleDelete(row)}>
+                            <IconTrash size={16} />
+                        </ActionIcon>
+                    </Tooltip>
+                </Group>
+            ),
+        },
+        {
+            header: "Date",
+            accessor: "slotDate",
+            render: (value) => (
+                <Text size="sm">{value ? moment(value as string).format("DD/MM/YYYY") : "-"}</Text>
+            ),
+        },
+        {
+            header: "Slot Time",
+            accessor: "slotTime",
+            render: (value) => (
+                <Group gap="xs">
+                    {(value as string[]).map((slot, index) => (
+                        <Badge key={index} variant="light">{slot}</Badge>
+                    ))}
+                </Group>
+            ),
+        },
+        {
+            header: "Demo By",
+            accessor: "demoBy",
+            render: (value) => <Text size="sm">{value as string}</Text>,
+        },
+    ];
+
+    // ─── Render ──────────────────────────────────────────────────────────────
+
+    return (
+        <>
+            <AppBreadcrumbs
+                items={[
+                    { label: PAGE_TITLE.LEAD_MGT },
+                    { label: PAGE_TITLE.SLOT_AVAILABILITY },
+                ]}
+            />
+
+            <DataTable
+                data={data}
+                columns={columns}
+                loading={loading}
+                pageSize={RECORDS_PER_PAGE}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+                totalRecords={totalRecords}
+            />
+
+            <Affix position={{ bottom: 40, right: 20 }}>
+                <Button
+                    leftSection={<IconEyePlus size={20} />}
+                    radius="xl"
+                    size="md"
+                    color="primary.5"
+                    style={{
+                        position: "fixed",
+                        bottom: 32,
+                        right: 32,
+                        zIndex: 100,
+                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+                    }}
+                    onClick={handleAddNew}
+                >
+                    Add Slot Availability
+                </Button>
+            </Affix>
+
+            <SlotAvailabilityModalForm
+                opened={opened}
+                onEdit={editing}
+                onClose={handleModalClose}
+                onSubmit={handleSubmit}
+            />
+
+            <CustomModal
+                opened={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                icon={IMAGES.WARNING}
+                title="Confirm Deletion"
+                subtext="Are you sure you want to delete this Slot Schedule?"
+                actionText="Yes, Delete"
+                onAction={handleConfirmDelete}
+                showCancel
+                cancelText="No"
+            />
+        </>
+    );
+};
+
+export default SlotAvailability;

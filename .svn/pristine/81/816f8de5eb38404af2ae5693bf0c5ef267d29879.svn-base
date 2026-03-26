@@ -1,0 +1,268 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import {
+    Modal, Select, Button, Group, Stack,
+    Grid, useMantineTheme, MultiSelect,
+} from "@mantine/core";
+import { DateInput } from "@mantine/dates";
+import { notifications } from "@mantine/notifications";
+
+import {
+    PersonListResponse, SlotAvailabilityData,
+    SlotAvailabilityFormState, SlotPayload, FormErrors,
+} from "@/types/admin/leadManagement/slotAvailability/slotAvailability";
+import { ApiError, Slot, SlotListResponse } from "@/types/admin/leadManagement/slotSetup/slotSetup";
+import { getRequest, postRequest } from "@/service";
+import { API_PATH } from "@/utils/apiPath";
+import { COMMON_MESSAGE, USER_ROLES } from "@/utils/constants";
+import moment from "moment";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type SlotAvailabilityProps = {
+    opened: boolean;
+    onClose: () => void;
+    onSubmit: (payload: SlotPayload) => void;
+    onEdit?: SlotAvailabilityData | null;
+};
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const EMPTY_FORM: SlotAvailabilityFormState = {
+    slotDate: "",
+    slotTime: [],
+    demoBy: "",
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const notifyError = (message: string) =>
+    notifications.show({ title: "Error", message, color: "red" });
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
+const SlotAvailabilityModalForm = ({ opened, onClose, onSubmit, onEdit }: SlotAvailabilityProps) => {
+    const theme = useMantineTheme();
+
+    const [form, setForm] = useState<SlotAvailabilityFormState>(EMPTY_FORM);
+    const [errors, setErrors] = useState<Partial<FormErrors>>({});
+    const [loading, setLoading] = useState(false);
+    const [slotData, setSlotData] = useState<Slot[]>([]);
+    const [slotOptions, setSlotOptions] = useState<{ label: string; value: string }[]>([]);
+    const [personOptions, setPersonOptions] = useState<{ label: string; value: string }[]>([]);
+
+    // ─── Handlers ────────────────────────────────────────────────────────────
+
+    const handleChange = (key: keyof SlotAvailabilityFormState, value: string | string[]) => {
+        setForm((prev) => ({ ...prev, [key]: value }));
+        setErrors((prev) => ({ ...prev, [key]: "" }));
+    };
+
+    const validateForm = (): boolean => {
+        const newErrors: FormErrors = {};
+
+        if (!form.slotDate) newErrors.slotDate = "Date is required";
+        if (!form.demoBy) newErrors.demoBy = "Person name is required";
+        if (!form.slotTime || form.slotTime.length === 0)
+            newErrors.slotTime = "Slot time is required";
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = async () => {
+        if (!validateForm()) return;
+
+        try {
+            setLoading(true);
+
+            let selectedSlots;
+
+            if (onEdit) {
+                const originalSlotIds = slotData
+                    .filter((slot) => onEdit.slotTime.includes(slot.slot_Name))
+                    .map((slot) => slot.slot_Id);
+
+                const removedSlots = slotData
+                    .filter((slot) =>
+                        originalSlotIds.includes(slot.slot_Id) &&
+                        !form.slotTime.includes(slot.slot_Id)
+                    )
+                    .map((slot) => ({ slotId: slot.slot_Id, slotName: slot.slot_Name, status: 0 }));
+
+                const activeSlots = slotData
+                    .filter((slot) => form.slotTime.includes(slot.slot_Id))
+                    .map((slot) => ({ slotId: slot.slot_Id, slotName: slot.slot_Name, status: 1 }));
+
+                selectedSlots = [...activeSlots, ...removedSlots];
+            } else {
+                selectedSlots = slotData
+                    .filter((slot) => form.slotTime.includes(slot.slot_Id))
+                    .map((slot) => ({ slotId: slot.slot_Id, slotName: slot.slot_Name }));
+            }
+
+            await onSubmit({
+                demoBy: form.demoBy,
+                slotDate: form.slotDate,
+                slots: selectedSlots,
+                status: 1,
+            });
+
+            setForm(EMPTY_FORM);
+            onClose();
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ─── Fetch ───────────────────────────────────────────────────────────────
+
+    const fetchSlotData = useCallback(async () => {
+        try {
+            const response = await getRequest<SlotListResponse>(API_PATH.GET_SLOT_DATA, {
+                sortBy: "created_at",
+                sortOrder: "DESC",
+            });
+
+            const slots = response?.data?.data || [];
+            setSlotData(slots);
+            setSlotOptions(
+                slots
+                    .filter((slot: Slot) => slot.status === 1)
+                    .map((slot: Slot) => ({
+                        label: `${slot.slot_Name} (${moment(slot.start_Time, "HH:mm:ss").format("hh:mm A")} - ${moment(slot.end_Time, "HH:mm:ss").format("hh:mm A")})`,
+                        value: slot.slot_Id,
+                    }))
+            );
+        } catch (err) {
+            console.error(err);
+            notifyError((err as ApiError)?.response?.data?.message || COMMON_MESSAGE.SLOT_SETUP_FETCH_FAIL);
+        }
+    }, []);
+
+    const fetchPersonOptions = useCallback(async () => {
+        try {
+            const response = await postRequest(
+                API_PATH.GET_USER_LIST_BY_ROLE,
+                { roleCode: USER_ROLES?.ADMIN }
+            ) as PersonListResponse;
+
+            const users = response?.data?.data ?? [];
+            setPersonOptions(users.map((user) => ({ label: user.name, value: user.id })));
+        } catch (err) {
+            console.error(err);
+            notifyError((err as ApiError)?.response?.data?.message || COMMON_MESSAGE.SLOT_SETUP_FETCH_FAIL);
+        }
+    }, []);
+
+    // ─── Effects ─────────────────────────────────────────────────────────────
+
+    useEffect(() => {
+        fetchSlotData();
+        fetchPersonOptions();
+    }, [fetchSlotData, fetchPersonOptions]);
+
+    /* Reset form when modal opens fresh */
+    useEffect(() => {
+        if (opened && !onEdit) {
+            setForm(EMPTY_FORM);
+            setErrors({});
+        }
+    }, [opened, onEdit]);
+
+    /* Populate form for edit */
+    useEffect(() => {
+        if (onEdit && slotData.length && personOptions.length) {
+            const selectedSlotIds = slotData
+                .filter((slot) => onEdit.slotTime.includes(slot.slot_Name))
+                .map((slot) => slot.slot_Id);
+
+            const matchedPerson = personOptions.find((p) => p.label === onEdit.demoBy);
+
+            setForm({
+                slotDate: onEdit.slotDate,
+                slotTime: selectedSlotIds,
+                demoBy: matchedPerson?.value ?? onEdit.demoBy,
+            });
+            setErrors({});
+        }
+    }, [onEdit, slotData, personOptions]);
+
+    // ─── Render ──────────────────────────────────────────────────────────────
+
+    return (
+        <Modal
+            opened={opened}
+            onClose={onClose}
+            title={onEdit ? "Edit Slot Availability" : "Add Slot Availability"}
+            size="lg"
+            styles={{
+                header: {
+                    backgroundColor: theme.colors.primary[5],
+                    color: "white",
+                    padding: "16px 20px",
+                    margin: "-1px -1px 16px -1px",
+                },
+                title: { color: "white", fontWeight: 600 },
+                close: { color: "white" },
+            }}
+        >
+            <Stack>
+                <Grid>
+                    <Grid.Col span={{ base: 12, sm: 6 }}>
+                        <Select
+                            label="Demo By"
+                            placeholder="Select Demo By"
+                            data={personOptions}
+                            value={form.demoBy}
+                            onChange={(value) => handleChange("demoBy", value || "")}
+                            disabled={!!onEdit}
+                            error={errors.demoBy}
+                            required
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={{ base: 12, sm: 6 }}>
+                        <DateInput
+                            label="Select Date"
+                            placeholder="Pick date"
+                            value={form.slotDate ? new Date(form.slotDate) : null}
+                            valueFormat="DD/MM/YYYY"
+                            minDate={new Date()}
+                            onChange={(date) =>
+                                handleChange("slotDate", date ? date.toString().split("T")[0] : "")
+                            }
+                            error={errors.slotDate}
+                            required
+                        />
+                    </Grid.Col>
+                </Grid>
+
+                <MultiSelect
+                    label="Slot Time"
+                    placeholder="Select slot"
+                    data={slotOptions}
+                    value={form.slotTime}
+                    onChange={(value) => handleChange("slotTime", value)}
+                    error={errors.slotTime}
+                    required
+                    searchable
+                    clearable
+                />
+
+                <Group justify="flex-end" mt="md">
+                    <Button variant="outline" onClick={onClose} color="primary.5">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSubmit} loading={loading} color="primary.5">
+                        {onEdit ? "Update Slot" : "Save Slot"}
+                    </Button>
+                </Group>
+            </Stack>
+        </Modal>
+    );
+};
+
+export default SlotAvailabilityModalForm;

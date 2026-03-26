@@ -1,0 +1,580 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { AppBreadcrumbs, AccessRestricted, CustomModal } from "@/components";
+import {
+    Box, Container, Flex, Text, Badge, Tooltip, Group, Stack,
+    ActionIcon, Modal, Button, Textarea, useMantineTheme, Affix,
+    Select, TextInput, Grid,
+} from "@mantine/core";
+import { IconCheck, IconEyePlus, IconRestore, IconSearch, IconX } from "@tabler/icons-react";
+import { Column, DataTable } from "@/components/DataTable";
+import {
+    RECORDS_PER_PAGE, PageTitles, COMMON_MESSAGE, REQUEST_STATUS_UI,
+    REQUEST_STATUS, RequestStatus, PAGE_TITLE, USER_ROLES, isNew, truncate,
+} from "@/utils/constants";
+import { useMenuPermissions } from "@/hooks/useMenuPermissions";
+import { usePathname } from "next/navigation";
+import moment from "moment";
+import { getRequest, patchRequest, postRequest } from "@/service";
+import { API_PATH } from "@/utils/apiPath";
+import { notifications } from "@mantine/notifications";
+import {
+    ScheduleForm, ApiError, GuestUser, GuestUserResponse,
+    DemoRequestFormState, PersonListResponse, DemoSlotSchedule, DemoScheduleResponse
+} from "@/types/admin/leadManagement/demoRequests/demoRequests";
+import DemoRequestModalForm from "./ModalForm";
+import { IMAGES } from "@/utils/images";
+import { metadata } from "@/app/layout";
+
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const notify = {
+    error: (message: string) => notifications.show({ title: "Error", message, color: "red" }),
+    success: (message: string) => notifications.show({ title: "Successful!", message, color: "green" }),
+};
+
+const FORMAT = { API: "YYYY-MM-DD", SLOT: "DD/MM/YYYY", DISPLAY: "hh:mm A" };
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const SCHEDULE_INITIAL: ScheduleForm = {
+    target: null, date: null, time: "",
+    note: "", demoBy: "", scheduleId: "", meetingLink: "",
+};
+
+const STATUS_FILTER_OPTIONS = [
+    { label: "Pending", value: String(REQUEST_STATUS.PENDING) },
+    { label: "Scheduled", value: String(REQUEST_STATUS.SCHEDULED) },
+    { label: "Rejected", value: String(REQUEST_STATUS.REJECTED) },
+];
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+const StatusBadge = ({ bookingStatus }: { bookingStatus: RequestStatus }) => {
+    const config = REQUEST_STATUS_UI[bookingStatus] ?? REQUEST_STATUS_UI[REQUEST_STATUS.PENDING];
+    return (
+        <Badge size="sm" color={config.color} variant="light" radius="sm">
+            {config.label}
+        </Badge>
+    );
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+const DemoRequests = () => {
+    const { canRead } = useMenuPermissions();
+    const pathname = usePathname();
+    const theme = useMantineTheme();
+    const pageTitle = PageTitles[pathname] ?? "this page";
+
+    const [requests, setRequests] = useState<GuestUser[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalRecords, setTotalRecords] = useState(0);
+    const [opened, setOpened] = useState(false);
+
+    const [scheduleForm, setScheduleForm] = useState<ScheduleForm>(SCHEDULE_INITIAL);
+    const [personOptions, setPersonOptions] = useState<{ label: string; value: string }[]>([]);
+    const [availableDates, setAvailableDates] = useState<Date[]>([]);
+    const [slotOptions, setSlotOptions] = useState<{ label: string; value: string }[]>([]);
+
+    const [datesLoading, setDatesLoading] = useState(false);
+    const [slotsLoading, setSlotsLoading] = useState(false);
+    const [modalFormError, setModalFormError] = useState<{ demoBy?: string; date?: string; scheduleId?: string }>({});
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+    const [selectedItem, setSelectedItem] = useState<string | null>(null);
+    const [filterName, setFilterName] = useState("");
+    const [filterStatus, setFilterStatus] = useState<string | null>(null);
+    const [allSchedules, setAllSchedules] = useState<any[]>([]);
+
+
+    const updateSchedule = <K extends keyof ScheduleForm>(key: K, value: ScheduleForm[K]) =>
+        setScheduleForm((prev) => ({ ...prev, [key]: value }));
+
+    const clearScheduleError = (key: keyof typeof modalFormError) =>
+        setModalFormError((prev) => ({ ...prev, [key]: undefined }));
+
+    const resetScheduleModal = () => {
+        setScheduleForm(SCHEDULE_INITIAL);
+        setModalFormError({});
+        setAvailableDates([]);
+        setSlotOptions([]);
+    };
+
+    // ── Data Fetching ──────────────────────────────────────────────────────────
+
+    const fetchDemoRequestData = useCallback(async () => {
+        try {
+            const response = await getRequest<GuestUserResponse>(API_PATH.GET_GUEST_USER, {
+                search: filterName,
+                page: currentPage,
+                limit: RECORDS_PER_PAGE,
+                sortBy: "created_at",
+                sortOrder: "DESC",
+                ...(filterStatus !== null && { bookingStatus: filterStatus }),
+            });
+            setRequests(response?.data?.data);
+            setTotalRecords(response?.data?.total ?? 0);
+        } catch (err) {
+            const error = err as ApiError;
+            notify.error(error?.response?.data?.message || COMMON_MESSAGE.DEMO_REQUEST_FETCH_FAIL);
+        }
+    }, [currentPage, filterName, filterStatus]);
+
+    const fetchPersonOptions = useCallback(async () => {
+        try {
+            const response = (await postRequest(API_PATH.GET_USER_LIST_BY_ROLE, {
+                roleCode: USER_ROLES?.ADMIN,
+            })) as PersonListResponse;
+
+            setPersonOptions(
+                (response?.data?.data ?? []).map((user) => ({ label: user.name, value: user.id }))
+            );
+        } catch (err) {
+            notify.error((err as ApiError)?.response?.data?.message || COMMON_MESSAGE.SLOT_SETUP_FETCH_FAIL);
+        }
+    }, []);
+
+
+    const fetchAvailableDates = async (demoBy: string) => {
+        setAvailableDates([]);
+        setSlotOptions([]);
+        updateSchedule("date", null);
+        updateSchedule("scheduleId", "");
+        setDatesLoading(true);
+
+        try {
+            const response = await postRequest<any>(
+                API_PATH.GET_DEMO_SCHEDULE_DETAILS,
+                { demoBy }
+            );
+
+            const records: DemoSlotSchedule[] = (response as DemoScheduleResponse)?.data?.data?.data || [];
+
+            // store all schedules
+            setAllSchedules(records);
+
+            // get unique dates
+            const uniqueDates = Array.from(
+                new Set(records.map((r) => r.slot_date))  // r is now typed as DemoSlotSchedule
+            ).map((d) => moment(d, FORMAT.API).toDate());
+
+            setAvailableDates(uniqueDates);
+
+        } catch (err) {
+            notify.error("Failed to fetch available dates");
+        } finally {
+            setDatesLoading(false);
+        }
+    };
+    // Step 2 — called when both Demo By and Date are set: fetch slots for that pair.
+    const fetchSlotsForDate = (demoBy: string, date: Date) => {
+        setSlotOptions([]);
+        updateSchedule("scheduleId", "");
+        setSlotsLoading(true);
+
+        try {
+            const filteredSlots = allSchedules.filter(
+                (slot) =>
+                    slot.demoBy === demoBy &&
+                    moment(slot.slot_date).format(FORMAT.API) ===
+                    moment(date).format(FORMAT.API)
+            );
+
+            setSlotOptions(
+                filteredSlots.map((slot: any) => ({
+                    value: slot.schedule_id,
+                    label: `${slot.slot_name} (${moment(slot.start_time, "HH:mm:ss").format(FORMAT.DISPLAY)} - ${moment(slot.end_time, "HH:mm:ss").format(FORMAT.DISPLAY)})`,
+                    disabled: slot.is_booked === 1,
+                }))
+            );
+        } catch (err) {
+            notify.error("Failed to filter slots");
+        } finally {
+            setSlotsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchDemoRequestData();
+        fetchPersonOptions();
+    }, [fetchDemoRequestData, fetchPersonOptions]);
+
+    // ── Handlers ──────────────────────────────────────────────────────────────
+
+    const handleScheduleConfirm = async () => {
+        const newErrors: typeof modalFormError = {
+            ...(!scheduleForm.demoBy && { demoBy: "Demo By is required" }),
+            ...(!scheduleForm.date && { date: "Demo Date is required" }),
+            ...(!scheduleForm.scheduleId && { scheduleId: "Slot is required" }),
+        };
+        setModalFormError(newErrors);
+        if (Object.keys(newErrors).length > 0) return;
+
+        try {
+            await patchRequest(API_PATH.POST_SCHEDULE_DEMO, {
+                guestId: scheduleForm.target?.guest_Id,
+                scheduleId: scheduleForm.scheduleId,
+                bookingStatus: 1,
+                meetingLink: "***",
+                metadata: "***"
+            });
+
+            notify.success("Demo scheduled successfully");
+            fetchDemoRequestData();
+            resetScheduleModal();
+        } catch (err) {
+            console.error(err);
+            notify.error("Failed to schedule demo");
+        }
+    };
+
+    const handleReject = (id: string) => {
+        setSelectedItem(id);
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmReject = async () => {
+        try {
+            await patchRequest(API_PATH.POST_SCHEDULE_DEMO, {
+                guestId: selectedItem,
+                bookingStatus: 3,
+
+            });
+
+            setRequests((prev) =>
+                prev.map((r) => r.guest_Id === selectedItem ? { ...r, status: 3 } : r)
+            );
+            notify.success("Request rejected successfully");
+            fetchDemoRequestData()
+            setDeleteModalOpen(false);
+            setSelectedItem(null);
+        } catch (err) {
+            console.error(err);
+            notify.error("Failed to reject request");
+        }
+    };
+
+    const handleSubmit = async (data: DemoRequestFormState) => {
+        try {
+            await postRequest(API_PATH.POST_GUEST_USER_PUBLIC, data);
+            notify.success(COMMON_MESSAGE.DEMO_REQUEST_CREATE_SUCCESS);
+            setOpened(false);
+            fetchDemoRequestData();
+        } catch (err) {
+            notify.error((err as ApiError)?.response?.data?.message || COMMON_MESSAGE.DEMO_REQUEST_FETCH_FAIL);
+        }
+    };
+
+    const handleFilterName = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFilterName(e.currentTarget.value);
+        setCurrentPage(1);
+    };
+
+    const handleFilterStatus = (val: string | null) => {
+        setFilterStatus(val);
+        setCurrentPage(1);
+    };
+
+    // ── Columns ───────────────────────────────────────────────────────────────
+
+    const columns: Column<GuestUser>[] = [
+        {
+            header: "Sl No",
+            accessor: "guest_Id",
+            align: "center",
+            render: (_value, _row, index) => (
+                <Text size="sm" c="dimmed">
+                    {(currentPage - 1) * RECORDS_PER_PAGE + index + 1}
+                </Text>
+            ),
+        },
+        {
+            header: "Action",
+            accessor: "guest_Id",
+            align: "center",
+            render: (_value, row) => {
+                if (Number(row?.bookingStatus) !== REQUEST_STATUS.PENDING) {
+                    return <Text size="xs" c="dimmed">—</Text>;
+                }
+                return (
+                    <Group gap="xs" justify="center" wrap="nowrap">
+                        <Tooltip label="Schedule Demo" withArrow>
+                            <ActionIcon size="sm" radius="xl" variant="light" color="green"
+                                onClick={() => updateSchedule("target", row)}>
+                                <IconCheck size={14} />
+                            </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label="Reject Request" withArrow>
+                            <ActionIcon size="sm" radius="xl" variant="light" color="red"
+                                onClick={() => handleReject(row.guest_Id)}>
+                                <IconX size={14} />
+                            </ActionIcon>
+                        </Tooltip>
+                    </Group>
+                );
+            },
+        },
+        {
+            header: "Guest Name",
+            accessor: "full_Name",
+            align: "left",
+            render: (value, row) => (
+                <Group gap="xs">
+                    <Text size="sm" fw={500}>{value as string}</Text>
+                    {isNew(row.createdAt) && (
+                        <Badge size="xs" color="green" variant="filled" radius="xs">New</Badge>
+                    )}
+                </Group>
+            ),
+        },
+        { header: "Mobile", accessor: "mobile_No", align: "left" },
+        { header: "Email", accessor: "email", align: "left" },
+        {
+            header: "City",
+            accessor: "city",
+            align: "left",
+            render: (value) => (
+                <Badge variant="light" color="violet" radius="sm" size="sm">
+                    {value as string}
+                </Badge>
+            ),
+        },
+        {
+            header: "Description",
+            accessor: "projectDescription",
+            align: "left",
+            render: (value) => {
+                const text = value as string;
+                return text?.length > 50 ? (
+                    <Tooltip label={text} multiline w={280} withArrow>
+                        <Text size="sm" c="dimmed" style={{ cursor: "default" }}>{truncate(text)}</Text>
+                    </Tooltip>
+                ) : (
+                    <Text size="sm" c="dimmed">{text}</Text>
+                );
+            },
+        },
+        {
+            header: "Status",
+            accessor: "bookingStatus",
+            align: "center",
+            render: (value) => <StatusBadge bookingStatus={value as RequestStatus} />,
+        },
+    ];
+
+    // ── Guard ─────────────────────────────────────────────────────────────────
+
+    if (!canRead) return <AccessRestricted pageTitle={pageTitle} />;
+
+    // ── Render ────────────────────────────────────────────────────────────────
+
+    return (
+        <Box>
+            <Container fluid>
+                <Flex justify="space-between" align="center" mb="md">
+                    <AppBreadcrumbs
+                        items={[{ label: PAGE_TITLE.LEAD_MGT }, { label: PAGE_TITLE.DEMO_REQ }]}
+                    />
+                </Flex>
+            </Container>
+
+            {/* Filters */}
+            <Group gap="sm" mb="md" px="md">
+                <TextInput
+                    placeholder="Search by name..."
+                    leftSection={<IconSearch size={16} />}
+                    value={filterName}
+                    onChange={handleFilterName}
+                />
+                <Select
+                    placeholder="Status"
+                    value={filterStatus}
+                    onChange={handleFilterStatus}
+                    clearable
+                    data={STATUS_FILTER_OPTIONS}
+                />
+            </Group>
+
+            {/* Table */}
+            <DataTable<GuestUser>
+                data={requests}
+                columns={columns}
+                pageSize={RECORDS_PER_PAGE}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+                totalRecords={totalRecords}
+            />
+
+            {/* Schedule Demo Modal */}
+            <Modal
+                opened={!!scheduleForm.target}
+                onClose={resetScheduleModal}
+                title={
+                    <Text fw={600} size="md">
+                        Schedule Demo — {scheduleForm.target?.full_Name}
+                    </Text>
+                }
+                styles={{
+                    header: {
+                        backgroundColor: theme.colors.primary[5],
+                        color: "white",
+                        padding: "16px 20px",
+                        margin: "-1px -1px 16px -1px",
+                    },
+                    title: { color: "white", fontWeight: 600 },
+                    close: { color: "white", "&:hover": { backgroundColor: "rgba(255,255,255,0.7)" } },
+                }}
+                centered radius="md" size="lg"
+            >
+                <Stack gap="md">
+                    <Grid>
+                        <Grid.Col span={{ base: 12, sm: 6 }}>
+                            <Select
+                                label="Demo By"
+                                placeholder="Select Demo Person"
+                                data={personOptions}
+                                value={scheduleForm.demoBy}
+                                onChange={(val) => {
+                                    updateSchedule("demoBy", val || "");
+                                    clearScheduleError("demoBy");
+                                    if (val) fetchAvailableDates(val);
+                                }}
+                                searchable
+                                nothingFoundMessage="No users found"
+                                error={modalFormError.demoBy}
+                                disabled={datesLoading}
+                                required
+                            />
+                        </Grid.Col>
+
+                        <Grid.Col span={{ base: 12, sm: 6 }}>
+                            <Select
+                                label="Demo Date"
+                                placeholder={
+                                    !scheduleForm.demoBy
+                                        ? "Select Demo By first"
+                                        : datesLoading
+                                            ? "Loading dates..."
+                                            : availableDates.length === 0
+                                                ? "No dates available"
+                                                : "Select a date"
+                                }
+                                data={availableDates.map((d) => ({
+                                    value: moment(d).format(FORMAT.API),
+                                    label: moment(d).format("DD MMM YYYY"),
+                                }))}
+                                value={
+                                    scheduleForm.date
+                                        ? moment(scheduleForm.date).format(FORMAT.API)
+                                        : null
+                                }
+                                onChange={(val) => {
+                                    const dateValue = val ? moment(val, FORMAT.API).toDate() : null;
+                                    updateSchedule("date", dateValue);
+                                    clearScheduleError("date");
+                                    if (dateValue && scheduleForm.demoBy) {
+                                        fetchSlotsForDate(scheduleForm.demoBy, dateValue);
+                                    }
+                                }}
+                                disabled={!scheduleForm.demoBy || datesLoading}
+                                error={modalFormError.date}
+                                required
+                            />
+                        </Grid.Col>
+
+                        <Grid.Col span={12}>
+                            <Select
+                                label="Slot"
+                                placeholder={
+                                    !scheduleForm.date
+                                        ? "Select a date first"
+                                        : slotsLoading
+                                            ? "Loading slots..."
+                                            : slotOptions.length === 0
+                                                ? "No slots available"
+                                                : "Select Slot"
+                                }
+                                data={slotOptions}
+                                value={scheduleForm.scheduleId}
+                                onChange={(val) => {
+                                    updateSchedule("scheduleId", val || "");
+                                    clearScheduleError("scheduleId");
+                                }}
+                                disabled={!scheduleForm.date || slotsLoading}
+                                error={modalFormError.scheduleId}
+                                required
+                            />
+                        </Grid.Col>
+
+                        <Grid.Col span={{ base: 12, sm: 6 }}>
+                            <TextInput
+                                label="Meeting Link"
+                                placeholder="https://meet.google.com/..."
+                                value={scheduleForm.meetingLink}
+                                onChange={(e) => updateSchedule("meetingLink", e.target.value)}
+                            />
+                        </Grid.Col>
+
+                        <Grid.Col span={{ base: 12, sm: 6 }}>
+                            <Textarea
+                                label="Note (optional)"
+                                placeholder="Any instructions for the client..."
+                                value={scheduleForm.note}
+                                onChange={(e) => updateSchedule("note", e.target.value)}
+                                rows={3}
+                            />
+                        </Grid.Col>
+                    </Grid>
+
+                    <Group justify="flex-end" mt="xs">
+                        <Button variant="outline" color="primary.5"
+                            leftSection={<IconRestore size={16} />}
+                            onClick={() => setScheduleForm(SCHEDULE_INITIAL)}>
+                            Cancel
+                        </Button>
+                        <Button color="primary.5" leftSection={<IconCheck size={16} />}
+                            onClick={handleScheduleConfirm}>
+                            Confirm Schedule
+                        </Button>
+                    </Group>
+                </Stack>
+            </Modal>
+
+            {/* FAB */}
+            <Affix position={{ bottom: 40, right: 20 }}>
+                <Button
+                    leftSection={<IconEyePlus size={20} />}
+                    radius="xl" size="md" color="primary.5"
+                    onClick={() => setOpened(true)}
+                    style={{ position: "fixed", bottom: 32, right: 32, zIndex: 100, boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}
+                >
+                    Add Demo Requests
+                </Button>
+            </Affix>
+
+            <DemoRequestModalForm
+                opened={opened}
+                editing={null}
+                onClose={() => setOpened(false)}
+                onSubmit={handleSubmit}
+            />
+
+            <CustomModal
+                opened={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                icon={IMAGES.WARNING}
+                title="Reject Request"
+                subtext="Are you sure you want to reject this demo request?"
+                actionText="Yes, Reject"
+                onAction={handleConfirmReject}
+                showCancel
+                cancelText="No"
+            />
+        </Box>
+    );
+};
+
+export default DemoRequests;

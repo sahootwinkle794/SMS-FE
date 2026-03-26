@@ -1,0 +1,493 @@
+'use client'
+
+import { Modal } from "@mantine/core"
+import { IconDownload, IconFileInvoice, IconX } from "@tabler/icons-react"
+import type { InvoiceData, InvoiceModalProps } from "./InvoiceModal.types"
+
+/* ================= HELPERS ================= */
+
+const fmt = (symbol: string, n: number) =>
+  `${symbol}${n.toLocaleString("en-IN")}`
+
+const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
+  Paid:     { label: "PAID",     bg: "#dcfce7", color: "#166534" },
+  Pending:  { label: "PENDING",  bg: "#fef9c3", color: "#854d0e" },
+  Failed:   { label: "FAILED",   bg: "#fee2e2", color: "#991b1b" },
+  Refunded: { label: "REFUNDED", bg: "#dbeafe", color: "#1e40af" },
+}
+
+/* ================= QR CODE ================= */
+/* Decorative dummy QR — three 7×7 finder squares + timing strips +
+   seeded pseudo-random data modules, visually indistinguishable from real */
+
+const QRCode = ({ size = 84 }: { size?: number }) => {
+  const CELLS = 21
+  const cell  = size / CELLS
+  const DARK  = "#1c1917"
+
+  /* Finder square pattern for one 7×7 block, given top-left origin */
+  const finderFill = (lr: number, lc: number): boolean => {
+    if (lr < 0 || lr > 6 || lc < 0 || lc > 6) return false
+    if (lr === 0 || lr === 6 || lc === 0 || lc === 6) return true
+    if (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4) return true
+    return false
+  }
+
+  /* Three finder corner origins */
+  const FINDERS = [
+    { rOff: 0,          cOff: 0 },
+    { rOff: 0,          cOff: CELLS - 7 },
+    { rOff: CELLS - 7,  cOff: 0 },
+  ]
+
+  /* Separator + format info quiet zones around each finder (8×8) */
+  const inFinderZone = (r: number, c: number): boolean =>
+    FINDERS.some(({ rOff, cOff }) =>
+      r >= rOff - 1 && r <= rOff + 7 && c >= cOff - 1 && c <= cOff + 7
+    )
+
+  /* Timing strips at row 6 and col 6 */
+  const isTiming = (r: number, c: number): boolean =>
+    (r === 6 && c >= 8 && c <= CELLS - 9) ||
+    (c === 6 && r >= 8 && r <= CELLS - 9)
+
+  /* Seeded deterministic "random" for data modules */
+  const isDark = (r: number, c: number): boolean => {
+    let h = (0x9e3779b9 ^ (r * 374761393) ^ (c * 668265261)) >>> 0
+    h = (Math.imul(h ^ (h >>> 13), 1540483477)) >>> 0
+    return ((h ^ (h >>> 15)) & 1) === 1
+  }
+
+  const rects: { x: number; y: number }[] = []
+
+  for (let r = 0; r < CELLS; r++) {
+    for (let c = 0; c < CELLS; c++) {
+      let filled = false
+
+      /* Check finder squares */
+      for (const { rOff, cOff } of FINDERS) {
+        if (finderFill(r - rOff, c - cOff)) { filled = true; break }
+      }
+
+      if (!filled) {
+        if (isTiming(r, c)) {
+          filled = (r + c) % 2 === 0
+        } else if (!inFinderZone(r, c)) {
+          filled = isDark(r, c)
+        }
+      }
+
+      if (filled) rects.push({ x: c * cell, y: r * cell })
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+      <div style={{
+        background: "#ffffff",
+        padding: 6,
+        borderRadius: 8,
+        border: "1px solid #d4cdc4",
+        lineHeight: 0,
+      }}>
+        <svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+          style={{ display: "block" }}
+        >
+          {rects.map(({ x, y }, i) => (
+            <rect key={i} x={x} y={y} width={cell} height={cell} fill={DARK} />
+          ))}
+        </svg>
+      </div>
+      <div style={{
+        fontSize: 9, fontWeight: 700, color: "#78716c",
+        letterSpacing: "0.12em", textTransform: "uppercase",
+      }}>
+        Scan to Pay
+      </div>
+    </div>
+  )
+}
+
+/* ================= TEAR ROW ================= */
+/* Single SVG — semicircle cutouts on both edges + centred dashed line.
+   viewBox width matches the 520px ticket so coordinates are pixel-exact. */
+
+const TearRow = ({
+  dashColor = "#a8a29e",
+  bgColor   = "#e7e5e4",
+}: {
+  dashColor?: string
+  bgColor?:   string
+}) => (
+  <svg
+    width="100%"
+    viewBox="0 0 520 28"
+    preserveAspectRatio="none"
+    style={{ display: "block", overflow: "visible" }}
+  >
+    <circle cx="0"   cy="14" r="14" fill={bgColor} />
+    <circle cx="520" cy="14" r="14" fill={bgColor} />
+    <line
+      x1="18" y1="14" x2="502" y2="14"
+      stroke={dashColor}
+      strokeWidth="1.5"
+      strokeDasharray="5 5"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
+/* ================= INFO ROW ================= */
+
+const InfoRow = ({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string
+  value: string
+  mono?: boolean
+}) => (
+  <div style={{
+    display: "flex", justifyContent: "space-between", alignItems: "baseline",
+    padding: "6px 0", borderBottom: "1px dashed #d4cdc4",
+  }}>
+    <span style={{
+      fontSize: 10, fontWeight: 600, letterSpacing: "0.1em",
+      textTransform: "uppercase", color: "#78716c",
+    }}>
+      {label}
+    </span>
+    <span style={{
+      fontSize: 12, fontWeight: 700, color: "#1c1917",
+      fontFamily: mono ? "'Courier New', monospace" : "inherit",
+    }}>
+      {value}
+    </span>
+  </div>
+)
+
+/* ================= INVOICE BODY ================= */
+
+const InvoiceBody = ({ invoice }: { invoice: InvoiceData }) => {
+  const subtotal = invoice.lineItems.reduce((s, i) => s + i.amount, 0)
+  const total    = subtotal - invoice.discount + invoice.tax
+  const sym      = invoice.currencySymbol
+  const status   = STATUS_CONFIG[invoice.paymentStatus] ?? {
+    label: invoice.paymentStatus, bg: "#f1f5f9", color: "#475569",
+  }
+
+  return (
+    <div
+      id="invoice-print-area"
+      style={{
+        fontFamily: "'Courier New', 'Courier', monospace",
+        maxWidth: 520,
+        margin: "0 auto",
+        position: "relative",
+      }}
+    >
+      {/* ── Stacked paper layers ── */}
+      <div style={{
+        position: "absolute", bottom: -10, left: 18, right: 18, top: 10,
+        background: "#ccc9c4", borderRadius: 12,
+        border: "1.5px solid #bfbbb5", zIndex: 0,
+      }} />
+      <div style={{
+        position: "absolute", bottom: -5, left: 9, right: 9, top: 5,
+        background: "#dedad6", borderRadius: 12,
+        border: "1.5px solid #d0ccc7", zIndex: 1,
+      }} />
+
+      {/* ════ MAIN TICKET ════ */}
+      <div style={{
+        background: "#faf9f7",
+        border: "1.5px solid #d4cdc4",
+        borderRadius: 12,
+        overflow: "hidden",
+        position: "relative",
+        zIndex: 2,
+      }}>
+
+        {/* ── DARK HEADER ── */}
+        <div style={{ background: "#1c1917", padding: "24px 28px 22px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{
+                fontSize: 9, fontWeight: 700, letterSpacing: "0.2em",
+                color: "#57534e", textTransform: "uppercase", marginBottom: 6,
+              }}>
+                Payment Receipt
+              </div>
+              <div style={{
+                fontSize: 16, fontWeight: 800, color: "#fafaf9",
+                letterSpacing: "-0.3px", lineHeight: 1.3,
+              }}>
+                {invoice.companyName}
+              </div>
+              <div style={{ fontSize: 10, color: "#57534e", marginTop: 4 }}>
+                {invoice.companyEmail}
+              </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{
+                display: "inline-block", padding: "3px 10px", borderRadius: 4,
+                fontSize: 10, fontWeight: 800, letterSpacing: "0.1em",
+                background: status.bg, color: status.color, marginBottom: 8,
+              }}>
+                {status.label}
+              </div>
+              <div style={{
+                fontSize: 22, fontWeight: 800, color: "#fafaf9", letterSpacing: "-0.5px",
+              }}>
+                {fmt(sym, total)}
+              </div>
+              <div style={{ fontSize: 9, color: "#57534e", marginTop: 2 }}>
+                Total Amount Due
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── TEAR ROW 1 ── */}
+        <TearRow />
+
+        {/* ── BILLED TO + META ── */}
+        <div style={{ padding: "20px 28px" }}>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{
+              fontSize: 9, fontWeight: 700, letterSpacing: "0.15em",
+              textTransform: "uppercase", color: "#78716c", marginBottom: 8,
+            }}>
+              Billed To
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#1c1917", letterSpacing: "-0.2px" }}>
+              {invoice.societyName}
+            </div>
+            <div style={{ fontSize: 11, color: "#78716c", marginTop: 3, lineHeight: 1.8 }}>
+              {invoice.societyAddress.split("\n").map((l, i) => (
+                <span key={i}>{l}<br /></span>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: "#78716c", marginTop: 4 }}>
+              Admin: <span style={{ color: "#1c1917", fontWeight: 700 }}>{invoice.customerName}</span>
+              &nbsp;·&nbsp;{invoice.customerPhone}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <InfoRow label="Invoice No"  value={invoice.invoiceId} mono />
+            <InfoRow label="Issue Date"  value={invoice.issuedDate} />
+            <InfoRow label="Pay Method"  value={invoice.paymentMethod} />
+            {invoice.nextBillingDate && invoice.nextBillingDate !== "—" && (
+              <InfoRow label="Renews On" value={invoice.nextBillingDate} />
+            )}
+          </div>
+        </div>
+
+        {/* ── TEAR ROW 2 ── */}
+        <TearRow />
+
+        {/* ── LINE ITEMS ── */}
+        <div style={{ padding: "20px 28px" }}>
+          <div style={{
+            fontSize: 9, fontWeight: 700, letterSpacing: "0.15em",
+            textTransform: "uppercase", color: "#78716c", marginBottom: 10,
+          }}>
+            Items
+          </div>
+
+          {invoice.lineItems.map((item, i) => (
+            <div key={i} style={{
+              display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+              padding: "10px 0", borderBottom: "1px dashed #d4cdc4",
+            }}>
+              <div style={{ flex: 1, paddingRight: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#1c1917" }}>
+                  {item.description}
+                </div>
+                <div style={{ fontSize: 10, color: "#78716c", marginTop: 3 }}>
+                  {item.package} · {item.type} · {item.period}
+                </div>
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#1c1917", whiteSpace: "nowrap" }}>
+                {fmt(sym, item.amount)}
+              </div>
+            </div>
+          ))}
+
+          {/* Totals */}
+          <div style={{ marginTop: 14 }}>
+            <div style={{
+              display: "flex", justifyContent: "space-between",
+              padding: "4px 0", fontSize: 11, color: "#78716c",
+            }}>
+              <span>Subtotal</span><span>{fmt(sym, subtotal)}</span>
+            </div>
+            {invoice.discount > 0 && (
+              <div style={{
+                display: "flex", justifyContent: "space-between",
+                padding: "4px 0", fontSize: 11, color: "#15803d",
+              }}>
+                <span>Discount</span><span>- {fmt(sym, invoice.discount)}</span>
+              </div>
+            )}
+            <div style={{
+              display: "flex", justifyContent: "space-between",
+              padding: "4px 0", fontSize: 11, color: "#78716c",
+            }}>
+              <span>{invoice.taxLabel ?? "Tax"}</span><span>{fmt(sym, invoice.tax)}</span>
+            </div>
+            <div style={{ height: 1.5, background: "#1c1917", margin: "10px 0 8px" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <span style={{
+                fontSize: 11, fontWeight: 700, color: "#1c1917",
+                letterSpacing: "0.06em", textTransform: "uppercase",
+              }}>
+                Total
+              </span>
+              <span style={{ fontSize: 20, fontWeight: 800, color: "#1c1917", letterSpacing: "-0.5px" }}>
+                {fmt(sym, total)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── TEAR ROW 3 — stub divider ── */}
+        <TearRow dashColor="#78716c" />
+
+        {/* ── STUB ── */}
+        <div style={{
+          background: "#f0ede9",
+          padding: "18px 28px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 16,
+        }}>
+          <div style={{ flex: 1 }}>
+            <div style={{
+              fontSize: 9, fontWeight: 700, letterSpacing: "0.18em",
+              textTransform: "uppercase", color: "#78716c", marginBottom: 6,
+            }}>
+              Keep this stub
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#1c1917" }}>
+              {invoice.societyName}
+            </div>
+            <div style={{ fontSize: 10, color: "#78716c", marginTop: 2 }}>
+              {invoice.invoiceId} · {invoice.issuedDate}
+            </div>
+            <div style={{ fontSize: 10, color: "#78716c", marginTop: 1 }}>
+              {fmt(sym, total)} · {invoice.paymentStatus}
+            </div>
+          </div>
+
+          {/* QR Code */}
+          <QRCode size={80} />
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
+/* ================= PRINT HANDLER ================= */
+
+const handlePrint = (invoiceId: string) => {
+  const el = document.getElementById("invoice-print-area")
+  if (!el) return
+  const win = window.open("", "_blank", "width=700,height=960")
+  if (!win) return
+  win.document.write(`
+    <html>
+      <head>
+        <title>Invoice ${invoiceId}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { background: #e7e5e4; padding: 40px 60px; }
+          @page { margin: 0.5in; size: A4; }
+          @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
+        </style>
+      </head>
+      <body>${el.outerHTML}</body>
+    </html>
+  `)
+  win.document.close()
+  win.focus()
+  setTimeout(() => { win.print(); win.close() }, 400)
+}
+
+/* ================= MODAL ================= */
+
+export const InvoiceModal = ({ opened, onClose, invoice }: InvoiceModalProps) => {
+  if (!invoice) return null
+
+  return (
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      size={600}
+      padding={0}
+      radius="md"
+      withCloseButton={false}
+      styles={{ body: { padding: 0 }, content: { overflow: "hidden" } }}
+    >
+      {/* Toolbar */}
+      <div style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        padding: "10px 14px", background: "#1c1917",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <IconFileInvoice size={15} color="#57534e" />
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#fafaf9", fontFamily: "monospace" }}>
+            {invoice.invoiceId}
+          </span>
+          <span style={{ fontSize: 12, color: "#44403c" }}>·</span>
+          <span style={{ fontSize: 12, color: "#78716c" }}>{invoice.societyName}</span>
+        </div>
+
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            onClick={() => handlePrint(invoice.invoiceId)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 6,
+              background: "#292524", border: "1px solid #44403c",
+              color: "#e7e5e4", fontSize: 12, fontWeight: 600,
+              cursor: "pointer", fontFamily: "monospace",
+            }}
+          >
+            <IconDownload size={13} />
+            Print / Save
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 30, height: 30, borderRadius: 6,
+              background: "transparent", border: "1px solid #44403c",
+              color: "#78716c", cursor: "pointer",
+            }}
+          >
+            <IconX size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{
+        overflowY: "auto", maxHeight: "86vh",
+        background: "#e7e5e4",
+        padding: "32px 40px 52px",
+      }}>
+        <InvoiceBody invoice={invoice} />
+      </div>
+    </Modal>
+  )
+}

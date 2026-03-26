@@ -1,0 +1,127 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { notifications } from "@mantine/notifications";
+import { getRequest, postRequest } from "@/service";
+import { API_PATH } from "@/utils/apiPath";
+import { COMMON_MESSAGE } from "@/utils/constants";
+import { SocietyAmenityMap } from "@/components";
+import {
+  AmenityCheckedMap,
+  CatAmenityMapApiResponse,
+  CategoryWithAmenities,
+  SocietyOption,
+} from "@/components/SocietyAmenityMap/SocietyAmenityMap.types";
+
+interface SocietyAmenityMapPageProps {
+  type: "site_admin" | "soc_admin";
+  societyId?: string;
+  societyName?: string;
+}
+
+export default function SocietyAmenityMapPage({
+  type,
+  societyId: defaultSocietyId,
+  societyName: defaultSocietyName,
+}: SocietyAmenityMapPageProps) {
+
+  const [societies,       setSocieties]       = useState<SocietyOption[]>([]);
+  const [activeSocietyId, setActiveSocietyId] = useState(defaultSocietyId ?? "");
+  const [categories,      setCategories]      = useState<CategoryWithAmenities[]>([]);
+  const [savedCheckedMap, setSavedCheckedMap] = useState<AmenityCheckedMap>({});
+  const [isLoading,       setIsLoading]       = useState(false);
+  const [isSaving,        setIsSaving]        = useState(false);
+
+  const notifyError   = (msg: string) => notifications.show({ title: "Error",   message: msg, color: "red"   });
+  const notifySuccess = (msg: string) => notifications.show({ title: "Success", message: msg, color: "green" });
+
+  useEffect(() => {
+    if (type === "site_admin") {
+      fetchSocieties();
+    } else if (defaultSocietyId) {
+      fetchCategoryAmenities(defaultSocietyId);
+    }
+  }, []);
+
+  const fetchSocieties = async () => {
+    try {
+      const res = await getRequest<{ data: { data: { societyId: string; societyName: string }[] } }>(
+        API_PATH.GET_SOCITIES
+      );
+      const list = res?.data?.data ?? [];
+      setSocieties(list.map((s) => ({ value: s.societyId, label: s.societyName })));
+    } catch {
+      notifyError(COMMON_MESSAGE.SOCIETY_FETCH_FAIL);
+    }
+  };
+
+  const fetchCategoryAmenities = async (societyId: string) => {
+    setIsLoading(true);
+    setCategories([]);
+    setSavedCheckedMap({});
+    try {
+      const payload = {
+        societyId
+      }
+      const res = (await postRequest(API_PATH.SOCIETY_AMENITY_MAPPING, payload)) as CatAmenityMapApiResponse;
+
+      const cats: CategoryWithAmenities[] = res?.data?.categoryDetails ?? [];
+      setCategories(cats);
+
+      const initial: AmenityCheckedMap = {};
+      cats.forEach((cat) =>
+        cat.amenityDetails.forEach((a) => {
+          initial[a.amenityId] = a.isMapped;
+        })
+      );
+      setSavedCheckedMap(initial);
+    } catch {
+      notifyError(COMMON_MESSAGE.SOCIETY_FETCH_FAIL);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSocietyChange = (societyId: string) => {
+    setActiveSocietyId(societyId);
+    fetchCategoryAmenities(societyId);
+  };
+
+  const handleSave = async (societyId: string, checkedMap: AmenityCheckedMap) => {
+    if (!societyId) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        societyId,
+        amenityDetails: Object.entries(checkedMap).map(([amenityId, isMapped]) => ({
+          amenityId,
+          status: isMapped ? 1 : 0,
+        })),
+      };
+
+      await postRequest(API_PATH.SAVE_SOCIETY_AMENITY_MAPPING, payload);
+
+      setSavedCheckedMap({ ...checkedMap });
+      notifySuccess(COMMON_MESSAGE.SOCIETY_AMENITY_MAPPING_SUCCESS);
+    } catch {
+      notifyError(COMMON_MESSAGE.SOCIETY_AMENITY_MAPPING_FAIL);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <SocietyAmenityMap
+      type={type}
+      societies={societies}
+      selectedSocietyId={activeSocietyId}
+      selectedSocietyName={defaultSocietyName}
+      categories={categories}
+      savedCheckedMap={savedCheckedMap}
+      onSave={handleSave}
+      onSocietyChange={handleSocietyChange}
+      isSaving={isSaving}
+      isLoading={isLoading}
+    />
+  );
+}
